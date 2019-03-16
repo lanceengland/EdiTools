@@ -215,7 +215,7 @@ Get-EdiFile -Verbose
 
 <#
 # Example usage 2
-Get-ChildItem -Path '\\ucuninas01\biztalk2013stg\Remits\Archive\835_From_Axiom' |
+Get-ChildItem -Path 'C:\Users\Lance\Desktop\WORKING FOLDER\EDI' |
 where {$_.CreationTime -ge '2019/03/08' -and $_.CreationTime -lt '2019/03/09'} |
 Select-String -Pattern "TRN\*1\*12330" |
 Get-EdiFile |
