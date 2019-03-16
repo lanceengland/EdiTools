@@ -1,113 +1,8 @@
-﻿#Import-Module EdiTools -Force
-
-
-<# 
-#old way ... #bleeech
-Get-ChildItem -Path $searchFolder |
-    Select-Object -ExpandProperty FullName |
-    Get-EdiTransactionSet |
-    Where-Object {('0-2397', '10223') -contains $_.TRN02 } |
-    ForEach-Object {
-        [System.IO.File]::WriteAllLines([System.IO.Path]::Combine($outputFolder, "$($_.OriginalShortFileName)[$($_.TRN02)].txt"), $_.Segments)
-    }
+﻿<# TODO: 
+    add documentation, iniline and readme
+    refactor into a "russian nesting dolls approach"
+    use pstypename to check pscustomobject parameters 
 #>
-
-function Get-EdiFile_old {
-[cmdletbinding()]
-    Param (
-        [parameter(
-            ValueFromPipeline = $true)]
-        [string] $FileName,
- 
-        [parameter(
-            ValueFromPipeline = $true)]
-        [System.IO.FileSystemInfo] $InputObject
-    )
-    Begin {      
-        foreach($fn in $FileName) {
-            if ([System.IO.File]::Exists($fn)){
-                $fileInfo = New-Object System.IO.FileInfo -ArgumentList $fn
-                $fileInfo | Get-EdiFileContent
-            }
-        }
-    }
-
-    Process {
-        if ($InputObject -is [System.IO.FileInfo]) {
-            
-            $fileContents = [System.IO.File]::ReadAllLines($InputObject.FullName)
-            if ($fileContents[0].Substring(0, 3) -ne 'ISA') { 
-                Write-Verbose "Skipping $($InputObject.FullName). Not an ISA file"; 
-            }
-            else {
-                <#  Todo: Add this to the inline doc
-                    character 104 is always the element delimiter, 
-                    105 is the sub-element delimiter, and 
-                    106 is the segment delimiter.
-                #>
-                $elementDelimiter = $fileContents[0][103]
-                $componentDelimiter = $fileContents[0][104]
-                $segmentDelimiter = $fileContents[0][105]
-
-                # files with new lines are read as arrays. If not, use the EDI segment delimiter to create array of lines
-                [string[]] $lines = $null
-                if ($fileContents.Count -eq 1) {
-                    $lines = $fileContents[0].Split($segmentDelimiter)
-                }
-                else {
-                    $lines = $fileContents
-                    # if file was already unwrapped, then we need to remove the trailing sehment delimiter from each line
-                    for($i=0; $i -lt $lines.Count; $i++) {
-                        $lines[$i] = $lines[$i].Substring(0, $lines[$i].Length - 1) 
-                    }
-                }
-
-         
-                $outputObject = New-Object –TypeName PSObject
-                # Basic file properties
-                $outputObject | Add-Member –MemberType NoteProperty –Name Name –Value $InputObject.Name |Out-Null
-                $outputObject | Add-Member –MemberType NoteProperty –Name DirectoryName –Value $InputObject.DirectoryName |Out-Null
-                $outputObject | Add-Member –MemberType NoteProperty –Name Lines –Value $lines |Out-Null
-                
-                #EDI parsing properties
-                $outputObject | Add-Member –MemberType NoteProperty –Name ElementDelimiter –Value $elementDelimiter |Out-Null
-                $outputObject | Add-Member –MemberType NoteProperty –Name ComponentDelimiter –Value $componentDelimiter |Out-Null
-
-                # ISA values
-                $isaSegments = $lines[0].Split($elementDelimiter)
-                $outputObject | Add-Member –MemberType NoteProperty –Name ISA01 –Value $isaSegments[1] |Out-Null
-                $outputObject | Add-Member –MemberType NoteProperty –Name ISA02 –Value $isaSegments[2] |Out-Null
-                $outputObject | Add-Member –MemberType NoteProperty –Name ISA03 –Value $isaSegments[3] |Out-Null
-                $outputObject | Add-Member –MemberType NoteProperty –Name ISA04 –Value $isaSegments[4] |Out-Null
-                $outputObject | Add-Member –MemberType NoteProperty –Name ISA05 –Value $isaSegments[5] |Out-Null
-                $outputObject | Add-Member –MemberType NoteProperty –Name ISA06 –Value $isaSegments[6] |Out-Null
-                $outputObject | Add-Member –MemberType NoteProperty –Name ISA07 –Value $isaSegments[7] |Out-Null
-                $outputObject | Add-Member –MemberType NoteProperty –Name ISA08 –Value $isaSegments[8] |Out-Null
-                $outputObject | Add-Member –MemberType NoteProperty –Name ISA09 –Value $isaSegments[9] |Out-Null
-                $outputObject | Add-Member –MemberType NoteProperty –Name ISA10 –Value $isaSegments[10] |Out-Null
-                $outputObject | Add-Member –MemberType NoteProperty –Name ISA11 –Value $isaSegments[11] |Out-Null
-                $outputObject | Add-Member –MemberType NoteProperty –Name ISA12 –Value $isaSegments[12] |Out-Null
-                $outputObject | Add-Member –MemberType NoteProperty –Name ISA13 –Value $isaSegments[13] |Out-Null
-                $outputObject | Add-Member –MemberType NoteProperty –Name ISA14 –Value $isaSegments[14] |Out-Null
-                $outputObject | Add-Member –MemberType NoteProperty –Name ISA15 –Value $isaSegments[15] |Out-Null
-                
-                # Convenience properties
-                $outputObject | Add-Member -MemberType AliasProperty -Name InterchangeControlNumber -Value ISA13 |Out-Null
-                $interchangeDate = [DateTime]::ParseExact($isaSegments[9], 'yymmdd', [DateTime].CultureInfo.InvariantCulture)
-                $outputObject | Add-Member -MemberType NoteProperty -Name InterchangeDate -Value $interchangeDate |Out-Null
-                $outputObject | Add-Member -MemberType AliasProperty -Name ReceiverQualifier -Value ISA07 |Out-Null
-                $outputObject | Add-Member -MemberType NoteProperty -Name ReceiverId -Value $isaSegments[8].TrimEnd() |Out-Null
-                $outputObject | Add-Member -MemberType AliasProperty -Name SenderQualifier -Value ISA05 |Out-Null
-                $outputObject | Add-Member -MemberType NoteProperty -Name SenderId -Value $isaSegments[6].TrimEnd() |Out-Null
-                
-                Write-Output $outputObject
-            }
-        }
-    }
-
-    End {}
-}
-
 function Get-EdiFile {
     [cmdletbinding()]
         Param (    
@@ -299,97 +194,33 @@ function Get-Edi835 {
     }
     End {}  
 }
-function Test-Pipeline {
-[cmdletbinding()]
-    Param (
-        [parameter(ValueFromPipeline = $true)][object] $a
-        
-    )
-    Begin { 
-        Write-Host "begin"
-        $fileList = New-Object System.Collections.Specialized.StringDictionary
-        $counter = 0
-        if ($a -is [System.Object[]]) {Write-Host "object array"; $a | Test-Pipeline }
-    }
-
-    Process { 
-        Write-Host "process"
-        if ($a -is [System.Object[]]) {Write-Host "object array; return"; return}
-
-        if ($a -is [System.String]) {
-            Write-Host "string"
-            if ($fileList.ContainsKey($a)) { return }
-            $fileList.Add($a, $null)
-            Write-Output $a
-            return
-        }
-
-        if ($a -is [Microsoft.PowerShell.Commands.MatchInfo]) {
-            Write-Host "Microsoft.PowerShell.Commands.MatchInfo"
-            [Microsoft.PowerShell.Commands.MatchInfo] $mi = $a
-
-            if ($fileList.ContainsKey($mi.Filename)) { return }
-            $fileList.Add($mi.Filename, $null)
-            Write-Output $mi.Filename
-            return
-        }
-
-        $counter = $counter + 1
-        Write-Host "$counter"
-        #Write-Output $a
-    }
-    End {
-        Write-Host "end"
-        Write-Host "fileList.Count $($fileList.Count)"
-    }  
-}
 
 ###############################
 
+<# 
+# previous version to output 1 ST per file 
+Get-ChildItem -Path $searchFolder |
+    Select-Object -ExpandProperty FullName |
+    Get-EdiTransactionSet |
+    Where-Object {('0-2397', '10223') -contains $_.TRN02 } |
+    ForEach-Object {
+        [System.IO.File]::WriteAllLines([System.IO.Path]::Combine($outputFolder, "$($_.OriginalShortFileName)[$($_.TRN02)].txt"), $_.Segments)
+    }
+#>
+# Example usage 1
 Clear-Host
-dir -Path 'C:\Users\Lance\Desktop\WORKING FOLDER\EDI' | Select-String -Pattern '9600006359' |
+
+Get-ChildItem -Path 'C:\Users\Lance\Desktop\WORKING FOLDER\EDI' | Select-String -Pattern '9600006359' |
 Get-EdiFile -Verbose
 
-#dir | Get-EdiFile -FileName "foo", "bar", "C:\Users\Lance\Desktop\Dax Book Data\ReallyWideTable.pbix" -Verbose
-
-#dir | Get-EdiFile |Get-EdiTransactionSet |select TransactionSetIdentifierCode
-
 <#
-dir -Path 'C:\Users\Lance\Desktop\WORKING FOLDER\EDI' |
-    Get-EdiFile |
-    where Name -eq '835_2048_UCAREMN-unwrapped.edi' |
-    Get-EdiTransactionSet |
-    #where ST02 -eq '611720010' |
-    Get-Edi835 -Verbose |
-    where TRN02 -eq '10230'
-
-
-cls
-Select-String -Path 'C:\Users\Lance\Desktop\WORKING FOLDER\EDI\*.*' -Pattern "TRN\*1\*10229" |gm
-
-
-# option #1
-dir -Path 'C:\Users\Lance\Desktop\WORKING FOLDER\EDI\*.edi' |Get-EdiFile
-
-# option #2
-"C:\Users\Lance\Desktop\WORKING FOLDER\EDI\835_2048_UCAREMN-unwrapped.edi", "C:\Users\Lance\Desktop\WORKING FOLDER\EDI\835_2048_UCAREMN.edi" |Get-EdiFile
-
+# Example usage 2
+Get-ChildItem -Path '\\ucuninas01\biztalk2013stg\Remits\Archive\835_From_Axiom' |
+where {$_.CreationTime -ge '2019/03/08' -and $_.CreationTime -lt '2019/03/09'} |
+Select-String -Pattern "TRN\*1\*12330" |
+Get-EdiFile |
+Get-EdiTransactionSet |
+Get-Edi835 |
+where { $_.TRN02 -eq '12330' } |
+select -ExpandProperty Segments
 #>
-
-<#
-cls
-$obj = New-Object psobject
-Add-Member -InputObject $obj -MemberType NoteProperty -Name "Name" -Value "Lance"
-"123", 1, $obj | Test-Pipeline
-
-Test-Pipeline -a abc, def
-
-[string[]]$arr = @('abc', 'def')
-Test-Pipeline -a $arr
-#>
-
-
-#Select-String -Path 'C:\Users\Lance\Desktop\WORKING FOLDER\EDI\*.*' -Pattern "TRN\*1\*" |Test-Pipeline |Get-Member
-
-#Test-Pipeline -a 'abc', 'def'
-
