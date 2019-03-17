@@ -1,9 +1,24 @@
 ﻿<# TODO: 
-    add documentation, iniline and readme
-    refactor into a "russian nesting dolls approach"
-    use pstypename to check pscustomobject parameters 
+
 #>
 function Get-EdiFile {
+    <#
+        .SYNOPSIS
+            Provides functions to read Edi X12 files, split into transaction sets, and adds properties to enable filtering
+        .DESCRIPTION
+            Provides functions to read Edi X12 files, split into transaction sets, and adds properties to enable filtering
+            
+
+        .PARAMETER InputObject
+            
+
+        .NOTES
+            Author: Lance England
+            Blog: http://lance-england.com
+        .EXAMPLE
+            
+
+    #>
     [cmdletbinding()]
         Param (    
             [parameter(ValueFromPipeline = $true)] [System.Object] $InputObject
@@ -45,7 +60,7 @@ function Get-EdiFile {
 
             $fileContents = [System.IO.File]::ReadAllLines($fileName)
             if ($fileContents[0].Substring(0, 3) -ne 'ISA') { 
-                Write-Verbose "Skipping $($InputObject.FullName). Not an ISA file"; 
+                Write-Warning "Skipping $($InputObject.FullName). Not an ISA file"; 
             }
             else {
                 <#  Todo: Add this to the inline doc
@@ -73,8 +88,8 @@ function Get-EdiFile {
          
                 $outputObject = New-Object –TypeName PSObject
                 # Basic file properties
-                $outputObject | Add-Member –MemberType NoteProperty –Name Name –Value $InputObject.Name |Out-Null
-                $outputObject | Add-Member –MemberType NoteProperty –Name DirectoryName –Value $InputObject.DirectoryName |Out-Null
+                $outputObject | Add-Member –MemberType NoteProperty –Name Name –Value ([System.Io.Path]::GetFileName($fileName)) |Out-Null
+                $outputObject | Add-Member –MemberType NoteProperty –Name DirectoryName –Value ([System.Io.Path]::GetDirectoryName($fileName)) |Out-Null
                 $outputObject | Add-Member –MemberType NoteProperty –Name Lines –Value $lines |Out-Null
                 
                 #EDI parsing properties
@@ -141,9 +156,8 @@ function Get-EdiTransactionSet {
             if ($line.StartsWith("SE*")) {
                 $transactionSet = New-Object –TypeName PSObject
 
-                #copy input object properties
+                # copy input object note properties (except for Lines string array)
                 if (-Not $DontCopyInputProperties) {
-                    # TOdo: Possible iterate Note properties, then Alias properties
                     foreach($prop in $InputObject.PsObject.Properties) {
                         # Exclude 'Lines' property; is redunadant and unnecessary
                         if( $prop.Name -ne 'Lines') {
@@ -195,32 +209,4 @@ function Get-Edi835 {
     End {}  
 }
 
-###############################
-
-<# 
-# previous version to output 1 ST per file 
-Get-ChildItem -Path $searchFolder |
-    Select-Object -ExpandProperty FullName |
-    Get-EdiTransactionSet |
-    Where-Object {('0-2397', '10223') -contains $_.TRN02 } |
-    ForEach-Object {
-        [System.IO.File]::WriteAllLines([System.IO.Path]::Combine($outputFolder, "$($_.OriginalShortFileName)[$($_.TRN02)].txt"), $_.Segments)
-    }
-#>
-# Example usage 1
-Clear-Host
-
-Get-ChildItem -Path 'C:\Users\Lance\Desktop\WORKING FOLDER\EDI' | Select-String -Pattern '9600006359' |
-Get-EdiFile -Verbose
-
-<#
-# Example usage 2
-Get-ChildItem -Path 'C:\Users\Lance\Desktop\WORKING FOLDER\EDI' |
-where {$_.CreationTime -ge '2019/03/08' -and $_.CreationTime -lt '2019/03/09'} |
-Select-String -Pattern "TRN\*1\*12330" |
-Get-EdiFile |
-Get-EdiTransactionSet |
-Get-Edi835 |
-where { $_.TRN02 -eq '12330' } |
-select -ExpandProperty Segments
-#>
+Export-ModuleMember -Cmdlet Get-EdiFile, Get-Edi835, Get-EdiTransactionSet
