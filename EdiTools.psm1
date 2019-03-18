@@ -47,7 +47,7 @@ function Get-EdiFile {
             }
             
             if (-not [System.IO.File]::Exists($fileName)) { 
-                Write-Verbose "File $a does not exist"    
+                Write-Verbose "File $fileName does not exist"    
                 return 
             }
 
