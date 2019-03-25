@@ -2,7 +2,9 @@ Import-Module EdiTools -Verbose
 
 # Example 1
 Clear-Host
-Get-ChildItem |Where-Object {$_.PsIsContainer -EQ $true -and $_.Name -eq 'Sample Files'} |Select-Object -ExpandProperty FullName -OutVariable sampleFiles
+Get-ChildItem |
+    Where-Object {$_.PsIsContainer -EQ $true -and $_.Name -eq 'Sample Files'} |
+    Select-Object -ExpandProperty FullName -OutVariable sampleFiles
 
 Get-ChildItem -Path $sampleFiles | 
     Select-String -Pattern 'TRN\*1\*051036622050010' |
