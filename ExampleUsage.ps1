@@ -2,11 +2,9 @@ Import-Module EdiTools -Verbose
 
 # Example 1
 Clear-Host
-$currentDirectory = Split-Path -parent $MyInvocation.MyCommand.Definition
-$samplesDirectory = [System.IO.Path]::Combine($currentDirectory, 'Sample Files')
-Write-Host $samplesDirectory
+Get-ChildItem |Where-Object {$_.PsIsContainer -EQ $true -and $_.Name -eq 'Sample Files'} |Select-Object -ExpandProperty FullName -OutVariable sampleFiles
 
-Get-ChildItem -Path $samplesDirectory | 
+Get-ChildItem -Path $sampleFiles | 
     Select-String -Pattern 'TRN\*1\*051036622050010' |
     Get-EdiFile | 
     Get-EdiTransactionSet |
