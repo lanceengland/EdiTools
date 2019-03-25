@@ -1,23 +1,16 @@
-﻿<# TODO: 
-
-#>
-function Get-EdiFile {
+﻿function Get-EdiFile {
     <#
         .SYNOPSIS
             Provides functions to read Edi X12 files, split into transaction sets, and adds properties to enable filtering
         .DESCRIPTION
-            Provides functions to read Edi X12 files, split into transaction sets, and adds properties to enable filtering
-            
-
+            Provides functions to read Edi X12 files, split into transaction sets, and adds properties to enable filtering 
         .PARAMETER InputObject
-            
 
         .NOTES
             Author: Lance England
             Blog: http://lance-england.com
         .EXAMPLE
             
-
     #>
     [cmdletbinding()]
         Param (    
@@ -202,11 +195,18 @@ function Get-Edi835 {
         Write-Verbose "Processing $($InputObject.Name) ST02=$($InputObject.ST02)"
 
         # Add 835 specifc properties
+        $bpr09 = $InputObject.Segments[1].ToString().Split($InputObject.ElementDelimiter).Get(9)
+        $InputObject | Add-Member –MemberType NoteProperty –Name BPR09 -Value $bpr09 |Out-Null
+
         $trn02 = $InputObject.Segments[2].ToString().Split($InputObject.ElementDelimiter).Get(2)
         $InputObject | Add-Member –MemberType NoteProperty –Name TRN02 -Value $trn02 |Out-Null
+
+        $InputObject | Add-Member -MemberType AliasProperty -Name BankAccount -Value BPR09
+        $InputObject | Add-Member -MemberType AliasProperty -Name TransactionNumber -Value TRN02
+        
         Write-Output $InputObject
     }
     End {}  
 }
 
-Export-ModuleMember -Cmdlet Get-EdiFile, Get-Edi835, Get-EdiTransactionSet
+Export-ModuleMember -Cmdlet Get-EdiFile, Get-EdiTransactionSet, Get-Edi835

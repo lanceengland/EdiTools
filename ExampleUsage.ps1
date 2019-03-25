@@ -1,21 +1,23 @@
-Import-Module EdiTools
+Import-Module EdiTools -Verbose
 
 # Example 1
 Clear-Host
+$currentDirectory = Split-Path -parent $MyInvocation.MyCommand.Definition
+$samplesDirectory = [System.IO.Path]::Combine($currentDirectory, 'Sample Files')
+Write-Host $samplesDirectory
 
-Get-ChildItem -Path 'C:\Users\Lance\Desktop\WORKING FOLDER\EDI' | 
-    Select-String -Pattern 'John Doe' |
+Get-ChildItem -Path $samplesDirectory | 
+    Select-String -Pattern 'TRN\*1\*051036622050010' |
     Get-EdiFile | 
     Get-EdiTransactionSet |
-    Select-Object -ExpandProperty Segments
-
+    Select-Object *
 
 # Example 2
-Get-ChildItem -Path 'C:\Users\Lance\Desktop\WORKING FOLDER\EDI' |
-    Where-Object {$_.CreationTime -ge '2019/03/08' -and $_.CreationTime -lt '2019/03/09'} |
-    Select-String -Pattern "TRN\*1\*12345" |
+Get-ChildItem -Path $samplesDirectory |
+    Where-Object {$_.CreationTime -ge '2019/01/01' -and $_.CreationTime -lt '2019/12/31'} |
+    Select-String -Pattern "TRN\*1\*051036622050010" |
     Get-EdiFile |
     Get-EdiTransactionSet |
     Get-Edi835 |
-    Where-Object { $_.TRN02 -eq '12345' } |
+    Where-Object { $_.TRN02 -eq '051036622050010' } |
     Select-Object -ExpandProperty Segments
