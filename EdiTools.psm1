@@ -5,12 +5,26 @@
         .DESCRIPTION
             Provides functions to read Edi X12 files, split into transaction sets, and adds properties to enable filtering 
         .PARAMETER InputObject
-
+            Can be a path, an array of paths, System.IO.FileInfo object, or Microsoft.PowerShell.Commands.MatchInfo object 
         .NOTES
             Author: Lance England
             Blog: http://lance-england.com
         .EXAMPLE
+            Get-EdiFile -InputObject 'c:\foo.txt' -Verbose
+
+            Simple version, a single file name parameter
+        .EXAMPLE
+            Get-EdiFile -InputObject '<your path here>\EdiTools\Sample Files\Sample1.txt', '<your path here>\EdiTools\Sample Files\Sample2.txt'
+
+            An array of file names
+        .EXAMPLE
+            Get-ChildItem -Path '<your path here>\EdiTools\Sample Files\*.txt' |Get-EdiFile
+
+            Pipe in output from Get-ChildItem
+        .EXAMPLE
+            Get-ChildItem -Path '<your path here>\EdiTools\Sample Files\*.txt' |Select-String -Pattern 'NM1\*QC\*1\*MOUSE\*MINNIE' |Get-EdiFile
             
+            Pipe in input from Select-String
     #>
     [cmdletbinding()]
         Param (    
@@ -122,11 +136,12 @@
     
         End {}
 }
+
 function Get-EdiTransactionSet {
 [cmdletbinding()]
     Param (
-        [parameter(ValueFromPipeline = $true)][PSObject] $InputObject,
-        [parameter()][switch] $DontCopyInputProperties
+        [parameter(ValueFromPipeline = $true, Mandatory = $true)][PSObject] $InputObject,
+        [parameter()][switch] $DontCopyInputProperties = $false
     )
     Begin {}
 
@@ -209,4 +224,4 @@ function Get-Edi835 {
     End {}  
 }
 
-Export-ModuleMember -Cmdlet Get-EdiFile, Get-EdiTransactionSet, Get-Edi835
+Export-ModuleMember -Function Get-EdiFile, Get-EdiTransactionSet, Get-Edi835

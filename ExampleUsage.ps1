@@ -1,23 +1,45 @@
-Import-Module EdiTools -Verbose
+Import-Module -Name "<your path here>\EdiTools\EdiTools.psm1"
 
-# Example 1
-Clear-Host
-Get-ChildItem |
-    Where-Object {$_.PsIsContainer -EQ $true -and $_.Name -eq 'Sample Files'} |
-    Select-Object -ExpandProperty FullName -OutVariable sampleFiles
+# No file
+Get-EdiFile -InputObject 'c:\foo.txt' -Verbose
 
-Get-ChildItem -Path $sampleFiles | 
-    Select-String -Pattern 'TRN\*1\*051036622050010' |
-    Get-EdiFile | 
+# One file
+Get-EdiFile -InputObject '<your path here>\EdiTools\Sample Files\Sample1.txt' |
+    Get-Member
+
+# Array of file names
+Get-EdiFile -InputObject '<your path here>\EdiTools\Sample Files\Sample1.txt', '<your path here>\EdiTools\Sample Files\Sample2.txt'
+
+# Select file content
+Get-EdiFile -InputObject '<your path here>\EdiTools\Sample Files\Sample1.txt' |
+    Select-Object -ExpandProperty Lines
+
+# Pipe from Get-ChildItem
+Get-ChildItem -Path '<your path here>\EdiTools\Sample Files\*.txt' |
+    Get-EdiFile
+
+# Pipe from Select-String
+Get-ChildItem -Path '<your path here>\EdiTools\Sample Files\*.txt' |
+    Select-String -Pattern 'NM1\*QC\*1\*MOUSE\*MINNIE' |
+    Get-EdiFile
+
+# Extract transaction sets
+Get-ChildItem -Path '<your path here>\EdiTools\Sample Files\*.txt' |
+    Select-String -Pattern 'NM1\*QC\*1\*MOUSE\*MINNIE' |
+    Get-EdiFile |
+    Get-EdiTransactionSet
+
+# Filter on TransactionSet properties
+Get-ChildItem -Path '<your path here>\EdiTools\Sample Files\*.txt' |
+    Select-String -Pattern 'NM1\*QC\*1\*MOUSE\*MINNIE' |
+    Get-EdiFile |
     Get-EdiTransactionSet |
-    Select-Object *
+    Where-Object {$_.ST02 -eq '112299'}
 
-# Example 2
-Get-ChildItem -Path $samplesDirectory |
-    Where-Object {$_.CreationTime -ge '2019/01/01' -and $_.CreationTime -lt '2019/12/31'} |
-    Select-String -Pattern "TRN\*1\*051036622050010" |
+# Add 835-specific properties and filter
+Get-ChildItem -Path '<your path here>\EdiTools\Sample Files\*.txt' |
+    Select-String -Pattern 'NM1\*QC\*1\*MOUSE\*MINNIE' |
     Get-EdiFile |
     Get-EdiTransactionSet |
     Get-Edi835 |
-    Where-Object { $_.TRN02 -eq '051036622050010' } |
-    Select-Object -ExpandProperty Segments
+    Where-Object {$_.TransactionNumber -eq '051036622050010'}
