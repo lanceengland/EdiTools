@@ -1,34 +1,34 @@
 ﻿function Get-EdiFile {
-    <#
-        .SYNOPSIS
-            Provides functions to read Edi X12 files, split into transaction sets, and adds properties to enable filtering
-        .DESCRIPTION
-            Provides functions to read Edi X12 files, split into transaction sets, and adds properties to enable filtering 
-        .PARAMETER InputObject
-            Can be a path, an array of paths, System.IO.FileInfo object, or Microsoft.PowerShell.Commands.MatchInfo object 
-        .NOTES
-            Author: Lance England
-            Blog: http://lance-england.com
-        .EXAMPLE
-            Get-EdiFile -InputObject 'c:\foo.txt' -Verbose
+<#
+    .SYNOPSIS
+        Reads Edi X12 files, promotes Edi and file properties, and exposes the file content as an array of string(s).
+    .DESCRIPTION
+        Reads Edi X12 files, promotes Edi and file properties, and exposes the file content as an array of string(s).
+    .PARAMETER InputObject
+        Can be a path, an array of paths, System.IO.FileInfo object, or Microsoft.PowerShell.Commands.MatchInfo object 
+    .NOTES
+        Author: Lance England
+        Blog: http://lance-england.com
+    .EXAMPLE
+        Get-EdiFile -InputObject 'c:\foo.txt' -Verbose
 
-            Simple version, a single file name parameter
-        .EXAMPLE
-            Get-EdiFile -InputObject '<your path here>\EdiTools\Sample Files\Sample1.txt', '<your path here>\EdiTools\Sample Files\Sample2.txt'
+        Simple version, a single file name parameter
+    .EXAMPLE
+        Get-EdiFile -InputObject '<your path here>\EdiTools\Sample Files\Sample1.txt', '<your path here>\EdiTools\Sample Files\Sample2.txt'
 
-            An array of file names
-        .EXAMPLE
-            Get-ChildItem -Path '<your path here>\EdiTools\Sample Files\*.txt' |Get-EdiFile
+        An array of file names
+    .EXAMPLE
+        Get-ChildItem -Path '<your path here>\EdiTools\Sample Files\*.txt' |Get-EdiFile
 
-            Pipe in output from Get-ChildItem
-        .EXAMPLE
-            Get-ChildItem -Path '<your path here>\EdiTools\Sample Files\*.txt' |Select-String -Pattern 'NM1\*QC\*1\*MOUSE\*MINNIE' |Get-EdiFile
-            
-            Pipe in input from Select-String
-    #>
+        Pipe in output from Get-ChildItem
+    .EXAMPLE
+        Get-ChildItem -Path '<your path here>\EdiTools\Sample Files\*.txt' |Select-String -Pattern 'NM1\*QC\*1\*MOUSE\*MINNIE' |Get-EdiFile
+        
+        Pipe in input from Select-String
+#>
     [cmdletbinding()]
         Param (    
-            [parameter(ValueFromPipeline = $true)] [System.Object] $InputObject
+            [parameter(ValueFromPipeline = $true, Mandatory = $true)] [System.Object] $InputObject
         )
 
         Begin {
@@ -138,10 +138,32 @@
 }
 
 function Get-EdiTransactionSet {
+<#
+    .SYNOPSIS
+        Splits Edi file contents into individual transaction sets (ST/SE) and promotes additional properties
+    .DESCRIPTION
+        Splits Edi file contents into individual transaction sets (ST/SE) and promotes additional properties
+    .PARAMETER InputObject
+        A PSObject returned from the Get-EdiFile cmdlet       
+    .PARAMETER SkipInputProperties
+        A flag to not copy input properties onto the output PSObject. Default is false.
+    .NOTES
+        Author: Lance England
+        Blog: http://lance-england.com
+    .EXAMPLE
+        Get-EdiFile -InputObject 'c:\foo.txt' |Get-EdiTransactionSet
+
+        Extract all transaction sets
+
+    .EXAMPLE
+        Get-EdiFile -InputObject 'c:\foo.txt' |Get-EdiTransactionSet |Where-Object {$_.ST02 -eq '112299'}
+
+        Extract all transaction sets and filter on ST02 property          
+#>
 [cmdletbinding()]
     Param (
         [parameter(ValueFromPipeline = $true, Mandatory = $true)][PSObject] $InputObject,
-        [parameter()][switch] $DontCopyInputProperties = $false
+        [parameter()][switch] $SkipInputProperties = $false
     )
     Begin {}
 
@@ -165,7 +187,7 @@ function Get-EdiTransactionSet {
                 $transactionSet = New-Object –TypeName PSObject
 
                 # copy input object note properties (except for Lines string array)
-                if (-Not $DontCopyInputProperties) {
+                if (-Not $SkipInputProperties) {
                     foreach($prop in $InputObject.PsObject.Properties) {
                         # Exclude 'Lines' property; is redunadant and unnecessary
                         if( $prop.Name -ne 'Lines') {
@@ -199,10 +221,29 @@ function Get-EdiTransactionSet {
     End {}  
 }
 function Get-Edi835 {
+<#
+    .SYNOPSIS
+        Accepts a PSObject from Get-EdiTransactionSet and promotes 835-specifc properties
+    .DESCRIPTION
+        Accepts a PSObject from Get-EdiTransactionSet and promotes 835-specifc properties
+    .PARAMETER InputObject
+        A PSObject returned from the Get-EdiTransactionSet cmdlet       
+    .NOTES
+        Author: Lance England
+        Blog: http://lance-england.com
+    .EXAMPLE
+        Get-EdiFile -InputObject 'c:\foo.txt' |Get-EdiTransactionSet |Get-Edi835
+
+        Promotes 835-specifc properties
+
+    .EXAMPLE
+        Get-EdiFile -InputObject 'c:\foo.txt' |Get-EdiTransactionSet |Where-Object {$_.ST02 -eq '112299'} |Get-Edi835 |Where-Object {$_.TransactionNumber -eq '051036622050010'}
+
+        Filters on 835-specifc properties, TRN02 in this example.     
+#>
 [cmdletbinding()]
     Param (
-        [parameter(ValueFromPipeline = $true)][PSObject] $InputObject,
-        [parameter()][switch] $DontCopyInputProperties
+        [parameter(ValueFromPipeline = $true, Mandatory = $true)][PSObject] $InputObject
     )
     Begin {}
 
