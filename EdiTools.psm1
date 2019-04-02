@@ -32,7 +32,7 @@
         )
 
         Begin {
-            # Maintain a string dictionary so we don't waster time processing the same file multiple times (mainly from Select-String input)
+            # Maintain a string dictionary so we don't waste time processing the same file multiple times (mainly from Select-String input)
             $fileList = New-Object System.Collections.Specialized.StringDictionary
             if ($InputObject -is [System.Object[]]) {
                 $InputObject | Get-EdiFile 
@@ -54,7 +54,7 @@
             }
             
             if (-not [System.IO.File]::Exists($fileName)) { 
-                Write-Verbose "File $fileName does not exist"    
+                Write-Error "File $fileName does not exist"    
                 return 
             }
 
@@ -65,73 +65,59 @@
 
             $fileList.Add($fileName, $null)
 
-            $fileContents = [System.IO.File]::ReadAllLines($fileName)
-            if ($fileContents[0].Substring(0, 3) -ne 'ISA') { 
-                Write-Warning "Skipping $($InputObject.FullName). Not an ISA file"; 
-            }
-            else {
-                <#  Todo: Add this to the inline doc
-                    character 104 is always the element delimiter, 
-                    105 is the sub-element delimiter, and 
-                    106 is the segment delimiter.
-                #>
-                $elementDelimiter = $fileContents[0][103]
-                $componentDelimiter = $fileContents[0][104]
-                $segmentDelimiter = $fileContents[0][105]
+            $fileContents = [System.IO.File]::ReadAllText($fileName)
+            <#
+                Character 104 is the element delimiter
+                Character 105 is the sub-element delimiter 
+                Character 106 is the segment delimiter
+            #>
+            $elementDelimiter = $fileContents[103]
+            $componentDelimiter = $fileContents[104]
+            $segmentDelimiter = $fileContents[105]
+            [bool] $isUnwrapped = ($fileContents[106] -eq "`r" -or $fileContents[106] -eq "`n")
+            # TODO: Check if EDI X12 file
 
-                # files with new lines are read as arrays. If not, use the EDI segment delimiter to create array of lines
-                [string[]] $lines = $null
-                if ($fileContents.Count -eq 1) {
-                    $lines = $fileContents[0].Split($segmentDelimiter)
-                }
-                else {
-                    $lines = $fileContents
-                    # if file was already unwrapped, then we need to remove the trailing sehment delimiter from each line
-                    for($i=0; $i -lt $lines.Count; $i++) {
-                        $lines[$i] = $lines[$i].Substring(0, $lines[$i].Length - 1) 
-                    }
-                }
+            $outputObject = New-Object –TypeName PSObject
+            # Basic file properties
+            $outputObject | Add-Member –MemberType NoteProperty –Name Name –Value ([System.Io.Path]::GetFileName($fileName)) |Out-Null
+            $outputObject | Add-Member –MemberType NoteProperty –Name DirectoryName –Value ([System.Io.Path]::GetDirectoryName($fileName)) |Out-Null
+            $outputObject | Add-Member –MemberType NoteProperty –Name Body –Value $fileContents |Out-Null
+            
+            #EDI parsing properties
+            $outputObject | Add-Member –MemberType NoteProperty –Name ElementDelimiter –Value $elementDelimiter |Out-Null
+            $outputObject | Add-Member –MemberType NoteProperty –Name ComponentDelimiter –Value $componentDelimiter |Out-Null
+            $outputObject | Add-Member –MemberType NoteProperty –Name SegmentDelimiter –Value $segmentDelimiter |Out-Null
+            $outputObject | Add-Member –MemberType NoteProperty –Name IsUnwrapped –Value $isUnwrapped |Out-Null
+            
+            # ISA values
+            $isaSegments = $fileContents.Substring(0, 105).Split($elementDelimiter)
+            $outputObject | Add-Member –MemberType NoteProperty –Name ISA01 –Value $isaSegments[1] |Out-Null
+            $outputObject | Add-Member –MemberType NoteProperty –Name ISA02 –Value $isaSegments[2] |Out-Null
+            $outputObject | Add-Member –MemberType NoteProperty –Name ISA03 –Value $isaSegments[3] |Out-Null
+            $outputObject | Add-Member –MemberType NoteProperty –Name ISA04 –Value $isaSegments[4] |Out-Null
+            $outputObject | Add-Member –MemberType NoteProperty –Name ISA05 –Value $isaSegments[5] |Out-Null
+            $outputObject | Add-Member –MemberType NoteProperty –Name ISA06 –Value $isaSegments[6] |Out-Null
+            $outputObject | Add-Member –MemberType NoteProperty –Name ISA07 –Value $isaSegments[7] |Out-Null
+            $outputObject | Add-Member –MemberType NoteProperty –Name ISA08 –Value $isaSegments[8] |Out-Null
+            $outputObject | Add-Member –MemberType NoteProperty –Name ISA09 –Value $isaSegments[9] |Out-Null
+            $outputObject | Add-Member –MemberType NoteProperty –Name ISA10 –Value $isaSegments[10] |Out-Null
+            $outputObject | Add-Member –MemberType NoteProperty –Name ISA11 –Value $isaSegments[11] |Out-Null
+            $outputObject | Add-Member –MemberType NoteProperty –Name ISA12 –Value $isaSegments[12] |Out-Null
+            $outputObject | Add-Member –MemberType NoteProperty –Name ISA13 –Value $isaSegments[13] |Out-Null
+            $outputObject | Add-Member –MemberType NoteProperty –Name ISA14 –Value $isaSegments[14] |Out-Null
+            $outputObject | Add-Member –MemberType NoteProperty –Name ISA15 –Value $isaSegments[15] |Out-Null
+            
+            # Convenience properties
+            $outputObject | Add-Member -MemberType AliasProperty -Name InterchangeControlNumber -Value ISA13 |Out-Null
+            $interchangeDate = [DateTime]::ParseExact($isaSegments[9], 'yymmdd', [DateTime].CultureInfo.InvariantCulture)
+            $outputObject | Add-Member -MemberType NoteProperty -Name InterchangeDate -Value $interchangeDate |Out-Null
+            $outputObject | Add-Member -MemberType AliasProperty -Name ReceiverQualifier -Value ISA07 |Out-Null
+            $outputObject | Add-Member -MemberType NoteProperty -Name ReceiverId -Value $isaSegments[8].TrimEnd() |Out-Null
+            $outputObject | Add-Member -MemberType AliasProperty -Name SenderQualifier -Value ISA05 |Out-Null
+            $outputObject | Add-Member -MemberType NoteProperty -Name SenderId -Value $isaSegments[6].TrimEnd() |Out-Null
+            $outputObject | Add-Member -MemberType ScriptProperty -Name Lines -Value { $this.Body -split $this.SegmentDelimiter + "\r?\n?" }
 
-         
-                $outputObject = New-Object –TypeName PSObject
-                # Basic file properties
-                $outputObject | Add-Member –MemberType NoteProperty –Name Name –Value ([System.Io.Path]::GetFileName($fileName)) |Out-Null
-                $outputObject | Add-Member –MemberType NoteProperty –Name DirectoryName –Value ([System.Io.Path]::GetDirectoryName($fileName)) |Out-Null
-                $outputObject | Add-Member –MemberType NoteProperty –Name Lines –Value $lines |Out-Null
-                
-                #EDI parsing properties
-                $outputObject | Add-Member –MemberType NoteProperty –Name ElementDelimiter –Value $elementDelimiter |Out-Null
-                $outputObject | Add-Member –MemberType NoteProperty –Name ComponentDelimiter –Value $componentDelimiter |Out-Null
-
-                # ISA values
-                $isaSegments = $lines[0].Split($elementDelimiter)
-                $outputObject | Add-Member –MemberType NoteProperty –Name ISA01 –Value $isaSegments[1] |Out-Null
-                $outputObject | Add-Member –MemberType NoteProperty –Name ISA02 –Value $isaSegments[2] |Out-Null
-                $outputObject | Add-Member –MemberType NoteProperty –Name ISA03 –Value $isaSegments[3] |Out-Null
-                $outputObject | Add-Member –MemberType NoteProperty –Name ISA04 –Value $isaSegments[4] |Out-Null
-                $outputObject | Add-Member –MemberType NoteProperty –Name ISA05 –Value $isaSegments[5] |Out-Null
-                $outputObject | Add-Member –MemberType NoteProperty –Name ISA06 –Value $isaSegments[6] |Out-Null
-                $outputObject | Add-Member –MemberType NoteProperty –Name ISA07 –Value $isaSegments[7] |Out-Null
-                $outputObject | Add-Member –MemberType NoteProperty –Name ISA08 –Value $isaSegments[8] |Out-Null
-                $outputObject | Add-Member –MemberType NoteProperty –Name ISA09 –Value $isaSegments[9] |Out-Null
-                $outputObject | Add-Member –MemberType NoteProperty –Name ISA10 –Value $isaSegments[10] |Out-Null
-                $outputObject | Add-Member –MemberType NoteProperty –Name ISA11 –Value $isaSegments[11] |Out-Null
-                $outputObject | Add-Member –MemberType NoteProperty –Name ISA12 –Value $isaSegments[12] |Out-Null
-                $outputObject | Add-Member –MemberType NoteProperty –Name ISA13 –Value $isaSegments[13] |Out-Null
-                $outputObject | Add-Member –MemberType NoteProperty –Name ISA14 –Value $isaSegments[14] |Out-Null
-                $outputObject | Add-Member –MemberType NoteProperty –Name ISA15 –Value $isaSegments[15] |Out-Null
-                
-                # Convenience properties
-                $outputObject | Add-Member -MemberType AliasProperty -Name InterchangeControlNumber -Value ISA13 |Out-Null
-                $interchangeDate = [DateTime]::ParseExact($isaSegments[9], 'yymmdd', [DateTime].CultureInfo.InvariantCulture)
-                $outputObject | Add-Member -MemberType NoteProperty -Name InterchangeDate -Value $interchangeDate |Out-Null
-                $outputObject | Add-Member -MemberType AliasProperty -Name ReceiverQualifier -Value ISA07 |Out-Null
-                $outputObject | Add-Member -MemberType NoteProperty -Name ReceiverId -Value $isaSegments[8].TrimEnd() |Out-Null
-                $outputObject | Add-Member -MemberType AliasProperty -Name SenderQualifier -Value ISA05 |Out-Null
-                $outputObject | Add-Member -MemberType NoteProperty -Name SenderId -Value $isaSegments[6].TrimEnd() |Out-Null
-                
-                Write-Output $outputObject
-            }
+            Write-Output $outputObject
         }
     
         End {}
@@ -266,3 +252,4 @@ function Get-Edi835 {
 }
 
 Export-ModuleMember -Function Get-EdiFile, Get-EdiTransactionSet, Get-Edi835
+
