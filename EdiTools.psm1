@@ -119,7 +119,7 @@
 
             # Pass-thru the Select-String pattern (if applicable)
             if ($InputObject -is [Microsoft.PowerShell.Commands.MatchInfo]) {
-                $outputObject | Add-Member -MemberType NoteProperty -Name SearchPattern -Value $InputObject.Pattern |Out-Null
+                $outputObject | Add-Member -MemberType NoteProperty -Name MatchInfo -Value $InputObject |Out-Null
             }
 
             Write-Output $outputObject
@@ -168,8 +168,35 @@ function Get-EdiTransactionSet {
             all output
         #>
 
-        if (1 -eq 0) {
-            # new code here
+        if ($InputObject.MatchInfo) {
+            # Get positions of the start of each ST segment
+            $stMatchInfo = Select-String -InputObject $InputObject.Body -Pattern ($InputObject.SegmentDelimiter + '\r?\n?ST\*') -AllMatches
+
+            $matchesCount = $stMatchInfo.Matches.Count
+            for($i=0; $i -lt $matchesCount; $i++) {
+                $stIdx = $stMatchInfo.Matches[$i].Index
+                # treat last match as special case to determine where SE segment is
+                if ($i -ne ($matchesCount - 1)) {
+                    $seIdx = $stMatchInfo.Matches[$i+1].Index - 1
+                }
+                else {
+                    # TODO
+                    #$ge = Select-String -InputObject $contents -Pattern "~\r?\n?GE\*"
+                    #$seIdx = $ge.Matches[0].Index - 1
+                    $seIdx = -1
+                }
+                Write-Host "We found the first match {start}:$($stIdx) {end}:$($seIdx)"    
+                <#
+                foreach($m in $inputResult.Matches) {
+                    if($m.Index -gt $stIdx -and $m.Index -lt $seIdx) {
+                        
+                        #Write-Host $contents.Substring($stIdx + 1, $seIdx - $stIdx)
+                        #Write-Host
+                        #Write-Host
+                        break
+                    }
+                } #>    
+            }
         } 
         else {
             [System.Collections.ArrayList] $segments = $null
