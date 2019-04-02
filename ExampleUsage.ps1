@@ -1,45 +1,47 @@
-Import-Module -Name "<your path here>\EdiTools\EdiTools.psm1"
+Import-Module -Name "C:\Users\Lance\Desktop\FILES\GitHub\EdiTools\EdiTools.psm1" -Force -Verbose
 
 # No file
-Get-EdiFile -InputObject 'c:\foo.edi' -Verbose
+Get-EdiFile -InputObject 'C:\Users\Lance\Desktop\FILES\GitHub\EdiTools\Sample Files\Sample1.edi' -Verbose -OutVariable ov
 
-# One file
-Get-EdiFile -InputObject '<your path here>\EdiTools\Sample Files\Sample1.edi' |
-    Get-Member
+$ov 
 
-# Array of file names
-Get-EdiFile -InputObject '<your path here>\EdiTools\Sample Files\Sample1.edi', '<your path here>\EdiTools\Sample Files\Sample2.edi'
+# # One file
+# Get-EdiFile -InputObject '<your path here>\EdiTools\Sample Files\Sample1.edi' |
+#     Get-Member
 
-# Select file content
-Get-EdiFile -InputObject '<your path here>\EdiTools\Sample Files\Sample1.edi' |
-    Select-Object -ExpandProperty Lines
+# # Array of file names
+# Get-EdiFile -InputObject '<your path here>\EdiTools\Sample Files\Sample1.edi', '<your path here>\EdiTools\Sample Files\Sample2.edi'
 
-# Pipe from Get-ChildItem
-Get-ChildItem -Path '<your path here>\EdiTools\Sample Files\*.edi' |
-    Get-EdiFile
+# # Select file content
+# Get-EdiFile -InputObject '<your path here>\EdiTools\Sample Files\Sample1.edi' |
+#     Select-Object -ExpandProperty Lines
 
-# Pipe from Select-String
-Get-ChildItem -Path '<your path here>\EdiTools\Sample Files\*.edi' |
-    Select-String -Pattern 'NM1\*QC\*1\*MOUSE\*MINNIE' |
-    Get-EdiFile
+# # Pipe from Get-ChildItem
+# Get-ChildItem -Path '<your path here>\EdiTools\Sample Files\*.edi' |
+#     Get-EdiFile
 
-# Extract transaction sets
-Get-ChildItem -Path '<your path here>\EdiTools\Sample Files\*.edi' |
-    Select-String -Pattern 'NM1\*QC\*1\*MOUSE\*MINNIE' |
-    Get-EdiFile |
-    Get-EdiTransactionSet
+# # Pipe from Select-String
+# Get-ChildItem -Path '<your path here>\EdiTools\Sample Files\*.edi' |
+#     Select-String -Pattern 'NM1\*QC\*1\*MOUSE\*MINNIE' |
+#     Get-EdiFile
 
-# Filter on TransactionSet properties
-Get-ChildItem -Path '<your path here>\EdiTools\Sample Files\*.edi' |
-    Select-String -Pattern 'NM1\*QC\*1\*MOUSE\*MINNIE' |
-    Get-EdiFile |
-    Get-EdiTransactionSet |
-    Where-Object {$_.ST02 -eq '112299'}
+# # Extract transaction sets
+# Get-ChildItem -Path '<your path here>\EdiTools\Sample Files\*.edi' |
+#     Select-String -Pattern 'NM1\*QC\*1\*MOUSE\*MINNIE' |
+#     Get-EdiFile |
+#     Get-EdiTransactionSet
 
-# Add 835-specific properties and filter
-Get-ChildItem -Path '<your path here>\EdiTools\Sample Files\*.edi' |
-    Select-String -Pattern 'NM1\*QC\*1\*MOUSE\*MINNIE' |
-    Get-EdiFile |
-    Get-EdiTransactionSet |
-    Get-Edi835 |
-    Where-Object {$_.TransactionNumber -eq '051036622050010'}
+# # Filter on TransactionSet properties
+# Get-ChildItem -Path '<your path here>\EdiTools\Sample Files\*.edi' |
+#     Select-String -Pattern 'NM1\*QC\*1\*MOUSE\*MINNIE' |
+#     Get-EdiFile |
+#     Get-EdiTransactionSet |
+#     Where-Object {$_.ST02 -eq '112299'}
+
+# # Add 835-specific properties and filter
+# Get-ChildItem -Path '<your path here>\EdiTools\Sample Files\*.edi' |
+#     Select-String -Pattern 'NM1\*QC\*1\*MOUSE\*MINNIE' |
+#     Get-EdiFile |
+#     Get-EdiTransactionSet |
+#     Get-Edi835 |
+#     Where-Object {$_.TransactionNumber -eq '051036622050010'}
