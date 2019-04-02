@@ -3,7 +3,8 @@ Import-Module -Name "C:\Users\Lance\Desktop\FILES\GitHub\EdiTools\EdiTools.psm1"
 # No file
 #Get-EdiFile -InputObject 'C:\Users\Lance\Desktop\FILES\GitHub\EdiTools\Sample Files\Sample1.edi' -Verbose -OutVariable ov
 Select-String -Path 'C:\Users\Lance\Desktop\FILES\GitHub\EdiTools\Sample Files\Sample1.edi' -Pattern "835" -AllMatches |
-    Get-EdiFile -OutVariable ov
+    Get-EdiFile |
+    Get-EdiTransactionSet -OutVariable ov
 
 # # One file
 # Get-EdiFile -InputObject '<your path here>\EdiTools\Sample Files\Sample1.edi' |

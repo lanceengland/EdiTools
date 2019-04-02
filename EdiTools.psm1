@@ -168,54 +168,60 @@ function Get-EdiTransactionSet {
             all output
         #>
 
-        [System.Collections.ArrayList] $segments = $null
-        [bool]$inTransactionSet = $false
+        if (1 -eq 0) {
+            # new code here
+        } 
+        else {
+            [System.Collections.ArrayList] $segments = $null
+            [bool]$inTransactionSet = $false
 
-        foreach($line in $InputObject.Lines) {
-            if ($line.StartsWith("ST*835*")) {
-                $segments = New-Object System.Collections.ArrayList
-                $inTransactionSet = $true
-            }
-    
-            if ($inTransactionSet) {
-                $segments.Add($line) |Out-Null
-            }
+            foreach($line in $InputObject.Lines) {
+                if ($line.StartsWith("ST*835*")) {
+                    $segments = New-Object System.Collections.ArrayList
+                    $inTransactionSet = $true
+                }
+        
+                if ($inTransactionSet) {
+                    $segments.Add($line) |Out-Null
+                }
 
-            if ($line.StartsWith("SE*")) {
-                $transactionSet = New-Object –TypeName PSObject
+                if ($line.StartsWith("SE*")) {
+                    $transactionSet = New-Object –TypeName PSObject
 
-                # copy input object note properties (except for Lines string array)
-                if (-Not $SkipInputProperties) {
-                    foreach($prop in $InputObject.PsObject.Properties) {
-                        # Exclude 'Lines' property; is redunadant and unnecessary
-                        if( $prop.Name -ne 'Lines') {
-                            # Alias properties need to be handled differently than NoteProperties (see the value parameter)
-                            switch ($prop.MemberType.value__) {
-                                ([System.Management.Automation.PSMemberTypes]::AliasProperty.value__) {$transactionSet | Add-Member –MemberType $prop.MemberType –Name $prop.Name –Value $prop.ReferencedMemberName |Out-Null}  
-                                ([System.Management.Automation.PSMemberTypes]::NoteProperty.value__) {$transactionSet | Add-Member –MemberType $prop.MemberType –Name $prop.Name –Value $prop.Value |Out-Null}  
+                    # copy input object note properties (except for Lines string array)
+                    if (-Not $SkipInputProperties) {
+                        foreach($prop in $InputObject.PsObject.Properties) {
+                            # Exclude 'Lines' property; is redunadant and unnecessary
+                            if( $prop.Name -ne 'Lines') {
+                                # Alias properties need to be handled differently than NoteProperties (see the value parameter)
+                                switch ($prop.MemberType.value__) {
+                                    ([System.Management.Automation.PSMemberTypes]::AliasProperty.value__) {$transactionSet | Add-Member –MemberType $prop.MemberType –Name $prop.Name –Value $prop.ReferencedMemberName |Out-Null}  
+                                    ([System.Management.Automation.PSMemberTypes]::NoteProperty.value__) {$transactionSet | Add-Member –MemberType $prop.MemberType –Name $prop.Name –Value $prop.Value |Out-Null}  
+                                }
                             }
                         }
                     }
-                }
-                # ST properties
-                $st01 = $segments[0].ToString().Split($InputObject.ElementDelimiter).Get(1)
-                $transactionSet | Add-Member –MemberType NoteProperty –Name ST01 -Value $st01 |Out-Null
-                    
-                $st02 = $segments[0].ToString().Split($InputObject.ElementDelimiter).Get(2)
-                $transactionSet | Add-Member –MemberType NoteProperty –Name ST02 -Value $st02 |Out-Null
+                    # ST properties
+                    $st01 = $segments[0].ToString().Split($InputObject.ElementDelimiter).Get(1)
+                    $transactionSet | Add-Member –MemberType NoteProperty –Name ST01 -Value $st01 |Out-Null
+                        
+                    $st02 = $segments[0].ToString().Split($InputObject.ElementDelimiter).Get(2)
+                    $transactionSet | Add-Member –MemberType NoteProperty –Name ST02 -Value $st02 |Out-Null
 
-                # ST aliases
-                $transactionSet | Add-Member -MemberType AliasProperty -Name TransactionSetIdentifierCode -Value ST01 |Out-Null
-                $transactionSet | Add-Member -MemberType AliasProperty -Name TransactionSetControlNumber -Value ST02 |Out-Null
+                    # ST aliases
+                    $transactionSet | Add-Member -MemberType AliasProperty -Name TransactionSetIdentifierCode -Value ST01 |Out-Null
+                    $transactionSet | Add-Member -MemberType AliasProperty -Name TransactionSetControlNumber -Value ST02 |Out-Null
 
-                $transactionSet | Add-Member –MemberType NoteProperty –Name Segments –Value $segments |Out-Null
-                    
-                Write-Output $transactionSet
-                $segments = $null
-                $inTransactionSet = $false
-            }
+                    $transactionSet | Add-Member –MemberType NoteProperty –Name Segments –Value $segments |Out-Null
+                        
+                    Write-Output $transactionSet
+                    $segments = $null
+                    $inTransactionSet = $false
+                } # if
+            } # foreach
         }
-    }
+
+    } # Process
     End {}  
 }
 function Get-Edi835 {
