@@ -117,6 +117,11 @@
             $outputObject | Add-Member -MemberType NoteProperty -Name SenderId -Value $isaSegments[6].TrimEnd() |Out-Null
             $outputObject | Add-Member -MemberType ScriptProperty -Name Lines -Value { $this.Body -split $this.SegmentDelimiter + "\r?\n?" }
 
+            # Pass-thru the Select-String pattern (if applicable)
+            if ($InputObject -is [Microsoft.PowerShell.Commands.MatchInfo]) {
+                $outputObject | Add-Member -MemberType NoteProperty -Name SearchPattern -Value $InputObject.Pattern |Out-Null
+            }
+
             Write-Output $outputObject
         }
     
@@ -154,6 +159,14 @@ function Get-EdiTransactionSet {
 
     Process {
         Write-Verbose "Processing $($InputObject.Name)"
+
+        <#
+            New logic:
+            if SearchPattern then
+            filtered output
+            else
+            all output
+        #>
 
         [System.Collections.ArrayList] $segments = $null
         [bool]$inTransactionSet = $false
