@@ -98,7 +98,6 @@
             $outputObject | Add-Member –MemberType NoteProperty –Name ElementDelimiter –Value $elementDelimiter |Out-Null
             $outputObject | Add-Member –MemberType NoteProperty –Name ComponentDelimiter –Value $componentDelimiter |Out-Null
             $outputObject | Add-Member –MemberType NoteProperty –Name SegmentDelimiter –Value $segmentDelimiter |Out-Null
-            $outputObject | Add-Member –MemberType NoteProperty –Name IsUnwrapped –Value $isUnwrapped |Out-Null
             
             # ISA values
             $isaSegments = $fileContents.Substring(0, 105).Split($elementDelimiter)
@@ -139,6 +138,31 @@
         }
     
         End {}
+}
+
+function internal_GetEdiTransactionSetOutputObject([psobject] $InputObject) {
+    $transactionSet = New-Object –TypeName PSObject
+
+    $transactionSet | Add-Member –MemberType NoteProperty –Name Body -Value $null |Out-Null
+    # ST properties
+    $transactionSet | Add-Member –MemberType NoteProperty –Name ST01 -Value $null |Out-Null
+    $transactionSet | Add-Member –MemberType NoteProperty –Name ST02 -Value $null |Out-Null
+
+    # ST aliases
+    $transactionSet | Add-Member -MemberType AliasProperty -Name TransactionSetIdentifierCode -Value ST01 |Out-Null
+    $transactionSet | Add-Member -MemberType AliasProperty -Name TransactionSetControlNumber -Value ST02 |Out-Null
+ 
+    foreach($prop in $InputObject.PsObject.Properties) {
+        # Exclude 'Lines' property; is redunadant and unnecessary
+        if( $prop.Name -ne 'Body' -and $prop.Name -ne 'Lines') {
+            # Alias properties need to be handled differently than NoteProperties (see the value parameter)
+            switch ($prop.MemberType.value__) {
+                ([System.Management.Automation.PSMemberTypes]::AliasProperty.value__) {$transactionSet | Add-Member –MemberType $prop.MemberType –Name $prop.Name –Value $prop.ReferencedMemberName |Out-Null}  
+                ([System.Management.Automation.PSMemberTypes]::NoteProperty.value__) {$transactionSet | Add-Member –MemberType $prop.MemberType –Name $prop.Name –Value $prop.Value |Out-Null}  
+            }
+        }
+    }   
+    $transactionSet
 }
 function Get-EdiTransactionSet {
 <#
@@ -214,8 +238,12 @@ function Get-EdiTransactionSet {
                     $seIdx = $InputObject.Body.IndexOf($searchString, $stIdx, [System.StringComparison]::InvariantCulture) - 1 - $newlineLength
                 }
 
+                $ts = internal_GetEdiTransactionSetOutputObject($InputObject)
+                $ts.Body = $transactionSetBody
+                Write-Output $ts
+
                 Write-Host "{start}:$($stIdx) {end}:$($seIdx)"    
-                Write-Host $transactionSetBody
+                #Write-Host $transactionSetBody
                 Write-Host
                 <#
                 foreach($m in $inputResult.Matches) {
