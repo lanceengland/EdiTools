@@ -196,11 +196,11 @@ function Get-EdiTransactionSet {
 
             $matchesCount = $stMatchInfo.Matches.Count
             for($i=0; $i -lt $matchesCount; $i++) {
-                $stIdx = $stMatchInfo.Matches[$i].Index
+                $stIdx = $stMatchInfo.Matches[$i].Index + 1 + $newlineLength
                 # treat last match as special case to determine where SE segment is
                 if ($i -ne ($matchesCount - 1)) {
                     $seIdx = $stMatchInfo.Matches[$i+1].Index - 1 - $newlineLength
-                    $transactionSetBody = $InputObject.Body.Substring($stIdx + 1, $seIdx - $stIdx)
+                    $transactionSetBody = $InputObject.Body.Substring($stIdx, $seIdx - $stIdx)
                 }
                 else {
                     $searchString = $InputObject.SegmentDelimiter
@@ -216,7 +216,7 @@ function Get-EdiTransactionSet {
 
                 Write-Host "{start}:$($stIdx) {end}:$($seIdx)"    
                 Write-Host $transactionSetBody
-
+                Write-Host
                 <#
                 foreach($m in $inputResult.Matches) {
                     if($m.Index -gt $stIdx -and $m.Index -lt $seIdx) {
