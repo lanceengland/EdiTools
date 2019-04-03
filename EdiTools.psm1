@@ -74,7 +74,18 @@
             $elementDelimiter = $fileContents[103]
             $componentDelimiter = $fileContents[104]
             $segmentDelimiter = $fileContents[105]
-            [bool] $isUnwrapped = ($fileContents[106] -eq "`r" -or $fileContents[106] -eq "`n")
+            $char106 = $fileContents[106]
+            $char107 = $fileContents[107]
+            [bool] $hasCarriageReturn = $false
+            [bool] $hasNewLine = $false
+
+            if ($char106 -eq "`r") {
+                $hasCarriageReturn = $true
+            }
+            if ($char106 -eq "`n" -or $char107 -eq "`n") {
+                $hasNewLine = $true
+            }
+
             # TODO: Check if EDI X12 file
 
             $outputObject = New-Object –TypeName PSObject
@@ -121,7 +132,9 @@
             if ($InputObject -is [Microsoft.PowerShell.Commands.MatchInfo]) {
                 $outputObject | Add-Member -MemberType NoteProperty -Name MatchInfo -Value $InputObject |Out-Null
             }
-
+            $outputObject | Add-Member -MemberType NoteProperty -Name HasCarriageReturn -Value $hasCarriageReturn |Out-Null
+            $outputObject | Add-Member -MemberType NoteProperty -Name HasNewLine -Value $hasNewLine |Out-Null
+            
             Write-Output $outputObject
         }
     
@@ -172,20 +185,38 @@ function Get-EdiTransactionSet {
             # Get positions of the start of each ST segment
             $stMatchInfo = Select-String -InputObject $InputObject.Body -Pattern ($InputObject.SegmentDelimiter + '\r?\n?ST\*') -AllMatches
 
+            $transactionSetBody = ""
+            $newlineLength = 0
+            if ($InputObject.HasCarriageReturn) {
+                $newlineLength += 1
+            }
+            if ($InputObject.HasNewLine) {
+                $newlineLength += 1
+            }
+
             $matchesCount = $stMatchInfo.Matches.Count
             for($i=0; $i -lt $matchesCount; $i++) {
                 $stIdx = $stMatchInfo.Matches[$i].Index
                 # treat last match as special case to determine where SE segment is
                 if ($i -ne ($matchesCount - 1)) {
-                    $seIdx = $stMatchInfo.Matches[$i+1].Index - 1
+                    $seIdx = $stMatchInfo.Matches[$i+1].Index - 1 - $newlineLength
+                    $transactionSetBody = $InputObject.Body.Substring($stIdx + 1, $seIdx - $stIdx)
                 }
                 else {
-                    # TODO
-                    #$ge = Select-String -InputObject $contents -Pattern "~\r?\n?GE\*"
-                    #$seIdx = $ge.Matches[0].Index - 1
-                    $seIdx = -1
+                    $searchString = $InputObject.SegmentDelimiter
+                    if ($InputObject.HasCarriageReturn) {
+                        $searchString += "`r"
+                    }
+                    if ($InputObject.HasNewLine) {
+                        $searchString += "`n"
+                    }
+                    $searchString += "GE*"
+                    $seIdx = $InputObject.Body.IndexOf($searchString, $stIdx, [System.StringComparison]::InvariantCulture) - 1 - $newlineLength
                 }
-                Write-Host "We found the first match {start}:$($stIdx) {end}:$($seIdx)"    
+
+                Write-Host "{start}:$($stIdx) {end}:$($seIdx)"    
+                Write-Host $transactionSetBody
+
                 <#
                 foreach($m in $inputResult.Matches) {
                     if($m.Index -gt $stIdx -and $m.Index -lt $seIdx) {
