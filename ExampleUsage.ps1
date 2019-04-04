@@ -1,8 +1,10 @@
 Import-Module -Name "C:\Users\Lance\Desktop\FILES\GitHub\EdiTools\EdiTools.psm1" -Force -Verbose
 
+#Select-String -Path 'C:\Users\Lance\Desktop\FILES\GitHub\EdiTools\Sample Files\Sample1-Wrapped.edi' -Pattern "GOOFY" -AllMatches -OutVariable ovMatchInfo
+
 # No file
 #Get-EdiFile -InputObject 'C:\Users\Lance\Desktop\FILES\GitHub\EdiTools\Sample Files\Sample1.edi' -Verbose -OutVariable ov
-Select-String -Path 'C:\Users\Lance\Desktop\FILES\GitHub\EdiTools\Sample Files\Sample1.edi' -Pattern "835" -AllMatches |
+Select-String -Path 'C:\Users\Lance\Desktop\FILES\GitHub\EdiTools\Sample Files\Sample1-Wrapped.edi' -Pattern "GOOFY" -AllMatches -OutVariable ovMatchInfo |
     Get-EdiFile -OutVariable ovFile |
     Get-EdiTransactionSet -OutVariable ovTranSet
 

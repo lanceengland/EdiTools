@@ -242,27 +242,25 @@ function Get-EdiTransactionSet {
                     # }
                     $searchString += "GE*"
                     $seIdx = $InputObject.Body.IndexOf($searchString, $stIdx, [System.StringComparison]::InvariantCulture) + 1 + $newlineLength
-                    # todo: math is wrong for substring length
                     $transactionSetBody = $InputObject.Body.Substring($stIdx, $seIdx - $stIdx)
                 }
 
                 $ts = internal_GetEdiTransactionSetOutputObject($InputObject)
                 $ts.Body = $transactionSetBody
-                Write-Output $ts
-
-                Write-Host "{start}:$($stIdx) {end}:$($seIdx)"    
+                
+                #Write-Host "{start}:$($stIdx) {end}:$($seIdx)"    
                 #Write-Host $transactionSetBody
-                Write-Host
-                <#
-                foreach($m in $inputResult.Matches) {
+                #Write-Host
+                <# TODO: 
+                    Wrapped source will use Matches and Index
+                    Unwrapped source will use LineNumber. I'm not sure how to use that with st/se index                
+                #>
+                foreach($m in $InputObject.MatchInfo.Matches) {
                     if($m.Index -gt $stIdx -and $m.Index -lt $seIdx) {
-                        
-                        #Write-Host $contents.Substring($stIdx + 1, $seIdx - $stIdx)
-                        #Write-Host
-                        #Write-Host
+                        Write-Output $ts
                         break
                     }
-                } #>    
+                }    
             }
         } 
         else {
