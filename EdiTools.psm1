@@ -212,6 +212,8 @@ function Get-EdiTransactionSet {
         #>
 
         if ($InputObject.MatchInfo) {
+
+            $InputObject.MatchInfo.Line = "" #clear this for perf reasons
             # Get positions of the start of each ST segment
             # todo: handle the unwrapped case using line number and index
             $stMatchInfo = Select-String -InputObject $InputObject.Body -Pattern ($InputObject.SegmentDelimiter + '\r?\n?ST\*') -AllMatches

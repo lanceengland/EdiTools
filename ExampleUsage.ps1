@@ -1,10 +1,15 @@
 Import-Module -Name "C:\Users\Lance\Desktop\FILES\GitHub\EdiTools\EdiTools.psm1" -Force -Verbose
 
-#Select-String -Path 'C:\Users\Lance\Desktop\FILES\GitHub\EdiTools\Sample Files\Sample1-Wrapped.edi' -Pattern "GOOFY" -AllMatches -OutVariable ovMatchInfo
+Select-String -Path "C:\Users\Lance\Desktop\WORKING FOLDER\EDI\835_1905_UCAREMN.txt" -Pattern "COURNEYA\*DANIEL" -AllMatches -OutVariable ovMatchInfo |
+    Get-EdiFile -OutVariable ovFile |
+    Get-EdiTransactionSet -OutVariable ovTranSet
+
+
+
 
 # No file
 #Get-EdiFile -InputObject 'C:\Users\Lance\Desktop\FILES\GitHub\EdiTools\Sample Files\Sample1.edi' -Verbose -OutVariable ov
-Select-String -Path 'C:\Users\Lance\Desktop\FILES\GitHub\EdiTools\Sample Files\Sample1-Wrapped.edi' -Pattern "GOOFY" -AllMatches -OutVariable ovMatchInfo |
+Select-String -Path 'C:\Users\Lance\Desktop\FILES\GitHub\EdiTools\Sample Files\*-Wrapped.edi' -Pattern "MOUSE" -AllMatches -OutVariable ovMatchInfo |
     Get-EdiFile -OutVariable ovFile |
     Get-EdiTransactionSet -OutVariable ovTranSet
 
