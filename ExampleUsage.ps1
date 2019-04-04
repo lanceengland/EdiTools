@@ -6,6 +6,7 @@ Select-String -Path 'C:\Users\Lance\Desktop\FILES\GitHub\EdiTools\Sample Files\S
     Get-EdiFile -OutVariable ovFile |
     Get-EdiTransactionSet -OutVariable ovTranSet
 
+
 # # One file
 # Get-EdiFile -InputObject '<your path here>\EdiTools\Sample Files\Sample1.edi' |
 #     Get-Member

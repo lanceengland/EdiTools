@@ -73,7 +73,7 @@
             #>
             $elementDelimiter = $fileContents[103]
             $componentDelimiter = $fileContents[104]
-            $segmentDelimiter = $fileContents[105]
+            $segmentDelimiterAndNewLine = $fileContents[105]
             $char106 = $fileContents[106]
             $char107 = $fileContents[107]
             [bool] $hasCarriageReturn = $false
@@ -97,7 +97,7 @@
             #EDI parsing properties
             $outputObject | Add-Member –MemberType NoteProperty –Name ElementDelimiter –Value $elementDelimiter |Out-Null
             $outputObject | Add-Member –MemberType NoteProperty –Name ComponentDelimiter –Value $componentDelimiter |Out-Null
-            $outputObject | Add-Member –MemberType NoteProperty –Name SegmentDelimiter –Value $segmentDelimiter |Out-Null
+            $outputObject | Add-Member –MemberType NoteProperty –Name SegmentDelimiter –Value $segmentDelimiterAndNewLine |Out-Null
             
             # ISA values
             $isaSegments = $fileContents.Substring(0, 105).Split($elementDelimiter)
@@ -181,7 +181,6 @@ function Get-EdiTransactionSet {
         Get-EdiFile -InputObject 'c:\foo.txt' |Get-EdiTransactionSet
 
         Extract all transaction sets
-
     .EXAMPLE
         Get-EdiFile -InputObject 'c:\foo.txt' |Get-EdiTransactionSet |Where-Object {$_.ST02 -eq '112299'}
 
@@ -196,6 +195,13 @@ function Get-EdiTransactionSet {
 
     Process {
         Write-Verbose "Processing $($InputObject.Name)"
+        $segmentDelimiterAndNewLine = $InputObject.SegmentDelimiter
+        if ($InputObject.HasCarriageReturn) {
+            $segmentDelimiterAndNewLine += "`r"
+        }
+        if ($InputObject.HasNewLine) {
+            $segmentDelimiterAndNewLine += "`n"
+        }
 
         <#
             New logic:
@@ -223,19 +229,21 @@ function Get-EdiTransactionSet {
                 $stIdx = $stMatchInfo.Matches[$i].Index + 1 + $newlineLength
                 # treat last match as special case to determine where SE segment is
                 if ($i -ne ($matchesCount - 1)) {
-                    $seIdx = $stMatchInfo.Matches[$i+1].Index - 1 - $newlineLength
+                    $seIdx = $stMatchInfo.Matches[$i+1].Index + 1 + $newlineLength
                     $transactionSetBody = $InputObject.Body.Substring($stIdx, $seIdx - $stIdx)
                 }
                 else {
-                    $searchString = $InputObject.SegmentDelimiter
-                    if ($InputObject.HasCarriageReturn) {
-                        $searchString += "`r"
-                    }
-                    if ($InputObject.HasNewLine) {
-                        $searchString += "`n"
-                    }
+                    $searchString = $segmentDelimiterAndNewLine
+                    # if ($InputObject.HasCarriageReturn) {
+                    #     $searchString += "`r"
+                    # }
+                    # if ($InputObject.HasNewLine) {
+                    #     $searchString += "`n"
+                    # }
                     $searchString += "GE*"
-                    $seIdx = $InputObject.Body.IndexOf($searchString, $stIdx, [System.StringComparison]::InvariantCulture) - 1 - $newlineLength
+                    $seIdx = $InputObject.Body.IndexOf($searchString, $stIdx, [System.StringComparison]::InvariantCulture) + 1 + $newlineLength
+                    # todo: math is wrong for substring length
+                    $transactionSetBody = $InputObject.Body.Substring($stIdx, $seIdx - $stIdx)
                 }
 
                 $ts = internal_GetEdiTransactionSetOutputObject($InputObject)
