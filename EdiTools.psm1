@@ -144,8 +144,11 @@
 
 function internal_GetEdiTransactionSetOutputObject([psobject] $InputObject, [string[]] $ExcludeProperties) {
     $transactionSet = New-Object –TypeName PSObject
-
     $transactionSet | Add-Member –MemberType NoteProperty –Name Body -Value $null |Out-Null
+    $transactionSet | Add-Member –MemberType ScriptProperty –Name Segments -Value {
+        $this.Body -split $this.SegmentDelimiter + "\r?\n?"
+    } |Out-Null
+
     # ST properties
     $transactionSet | Add-Member –MemberType NoteProperty –Name ST01 -Value $null |Out-Null
     $transactionSet | Add-Member –MemberType NoteProperty –Name ST02 -Value $null |Out-Null
@@ -241,16 +244,12 @@ function Get-EdiTransactionSet {
                 $OutputObject = internal_GetEdiTransactionSetOutputObject -InputObject $InputObject -ExcludeProperties 'Body','Lines'
                 $OutputObject.Body = $transactionSetBody
                 
-                  
-
                 <# TODO: 
                     Wrapped source will use Matches and Index
                     Unwrapped source will use LineNumber. I'm not sure how to use that with st/se index                
                 #>
                 foreach($m in $InputObject.MatchInfo.Matches) {
                     if($m.Index -gt $stIdx -and $m.Index -lt $seIdx) {
-
-                        # TODO: Add ST,SE, Tran..., etc values to properties
                         $stSegmentAsString = $transactionSetBody.Substring(0, $transactionSetBody.IndexOf($InputObject.SegmentDelimiter))
                         $stSegments = $stSegmentAsString.Split($InputObject.ElementDelimiter)
                         $OutputObject.ST01 = $stSegments[1]
@@ -277,34 +276,13 @@ function Get-EdiTransactionSet {
                 }
 
                 if ($line.StartsWith("SE*")) {
-                    $transactionSet = New-Object –TypeName PSObject
-
-                    # copy input object note properties (except for Lines string array)
-                    foreach($prop in $InputObject.PsObject.Properties) {
-                        # Exclude 'Lines' property; is redunadant and unnecessary
-                        if( $prop.Name -ne 'Lines') {
-                            # Alias properties need to be handled differently than NoteProperties (see the value parameter)
-                            switch ($prop.MemberType.value__) {
-                                ([System.Management.Automation.PSMemberTypes]::AliasProperty.value__) {$transactionSet | Add-Member –MemberType $prop.MemberType –Name $prop.Name –Value $prop.ReferencedMemberName |Out-Null}  
-                                ([System.Management.Automation.PSMemberTypes]::NoteProperty.value__) {$transactionSet | Add-Member –MemberType $prop.MemberType –Name $prop.Name –Value $prop.Value |Out-Null}  
-                            }
-                        }
-                    }
-
+                    $OutputObject = internal_GetEdiTransactionSetOutputObject -InputObject $InputObject -ExcludeProperties 'Body','Lines'
+                    
                     # ST properties
-                    $st01 = $segments[0].ToString().Split($InputObject.ElementDelimiter).Get(1)
-                    $transactionSet | Add-Member –MemberType NoteProperty –Name ST01 -Value $st01 |Out-Null
-                        
-                    $st02 = $segments[0].ToString().Split($InputObject.ElementDelimiter).Get(2)
-                    $transactionSet | Add-Member –MemberType NoteProperty –Name ST02 -Value $st02 |Out-Null
+                    $OutputObject.ST01 = $segments[0].ToString().Split($InputObject.ElementDelimiter).Get(1)
+                    $OutputObject.ST02 = $segments[0].ToString().Split($InputObject.ElementDelimiter).Get(2)
 
-                    # ST aliases
-                    $transactionSet | Add-Member -MemberType AliasProperty -Name TransactionSetIdentifierCode -Value ST01 |Out-Null
-                    $transactionSet | Add-Member -MemberType AliasProperty -Name TransactionSetControlNumber -Value ST02 |Out-Null
-
-                    $transactionSet | Add-Member –MemberType NoteProperty –Name Segments –Value $segments |Out-Null
-                        
-                    Write-Output $transactionSet
+                    Write-Output $OutputObject
                     $segments = $null
                     $inTransactionSet = $false
                 } # if
