@@ -73,7 +73,7 @@
             #>
             $elementDelimiter = $fileContents[103]
             $componentDelimiter = $fileContents[104]
-            $segmentDelimiterAndNewLine = $fileContents[105]
+            $segmentDelimiter = $fileContents[105]
             $char106 = $fileContents[106]
             $char107 = $fileContents[107]
             [bool] $hasCarriageReturn = $false
@@ -97,7 +97,7 @@
             #EDI parsing properties
             $outputObject | Add-Member –MemberType NoteProperty –Name ElementDelimiter –Value $elementDelimiter |Out-Null
             $outputObject | Add-Member –MemberType NoteProperty –Name ComponentDelimiter –Value $componentDelimiter |Out-Null
-            $outputObject | Add-Member –MemberType NoteProperty –Name SegmentDelimiter –Value $segmentDelimiterAndNewLine |Out-Null
+            $outputObject | Add-Member –MemberType NoteProperty –Name SegmentDelimiter –Value $segmentDelimiter |Out-Null
             
             # ISA values
             $isaSegments = $fileContents.Substring(0, 105).Split($elementDelimiter)
@@ -140,7 +140,7 @@
         End {}
 }
 
-function internal_GetEdiTransactionSetOutputObject([psobject] $InputObject) {
+function internal_GetEdiTransactionSetOutputObject([psobject] $InputObject, [string[]] $ExcludeProperties) {
     $transactionSet = New-Object –TypeName PSObject
 
     $transactionSet | Add-Member –MemberType NoteProperty –Name Body -Value $null |Out-Null
@@ -154,7 +154,8 @@ function internal_GetEdiTransactionSetOutputObject([psobject] $InputObject) {
  
     foreach($prop in $InputObject.PsObject.Properties) {
         # Exclude 'Lines' property; is redunadant and unnecessary
-        if( $prop.Name -ne 'Body' -and $prop.Name -ne 'Lines') {
+        # $prop.Name -ne 'Body' -and $prop.Name -ne 'Lines'
+        if( -not ($ExcludeProperties -contains $prop.Name) ) {
             # Alias properties need to be handled differently than NoteProperties (see the value parameter)
             switch ($prop.MemberType.value__) {
                 ([System.Management.Automation.PSMemberTypes]::AliasProperty.value__) {$transactionSet | Add-Member –MemberType $prop.MemberType –Name $prop.Name –Value $prop.ReferencedMemberName |Out-Null}  
@@ -188,37 +189,23 @@ function Get-EdiTransactionSet {
 #>
 [cmdletbinding()]
     Param (
-        [parameter(ValueFromPipeline = $true, Mandatory = $true)][PSObject] $InputObject,
-        [parameter()][switch] $SkipInputProperties = $false
+        [parameter(ValueFromPipeline = $true, Mandatory = $true)][PSObject] $InputObject
     )
     Begin {}
 
     Process {
         Write-Verbose "Processing $($InputObject.Name)"
-        $segmentDelimiterAndNewLine = $InputObject.SegmentDelimiter
-        if ($InputObject.HasCarriageReturn) {
-            $segmentDelimiterAndNewLine += "`r"
-        }
-        if ($InputObject.HasNewLine) {
-            $segmentDelimiterAndNewLine += "`n"
-        }
 
-        <#
-            New logic:
-            if SearchPattern then
-            filtered output
-            else
-            all output
-        #>
-
+        # If input object is from Select-String, filter the output using the inbound MatchInfo
         if ($InputObject.MatchInfo) {
+            # For wrapped files, the Line property will be the entire file contents. Remove for perf
+            $InputObject.MatchInfo.Line = [string]::Empty
 
-            $InputObject.MatchInfo.Line = "" #clear this for perf reasons
             # Get positions of the start of each ST segment
             # todo: handle the unwrapped case using line number and index
             $stMatchInfo = Select-String -InputObject $InputObject.Body -Pattern ($InputObject.SegmentDelimiter + '\r?\n?ST\*') -AllMatches
 
-            $transactionSetBody = ""
+            # calculate the length of new line char(s), if any. Could be 0, 1, or 2
             $newlineLength = 0
             if ($InputObject.HasCarriageReturn) {
                 $newlineLength += 1
@@ -226,7 +213,8 @@ function Get-EdiTransactionSet {
             if ($InputObject.HasNewLine) {
                 $newlineLength += 1
             }
-
+            
+            $transactionSetBody = ""
             $matchesCount = $stMatchInfo.Matches.Count
             for($i=0; $i -lt $matchesCount; $i++) {
                 $stIdx = $stMatchInfo.Matches[$i].Index + 1 + $newlineLength
@@ -236,19 +224,19 @@ function Get-EdiTransactionSet {
                     $transactionSetBody = $InputObject.Body.Substring($stIdx, $seIdx - $stIdx)
                 }
                 else {
-                    $searchString = $segmentDelimiterAndNewLine
-                    # if ($InputObject.HasCarriageReturn) {
-                    #     $searchString += "`r"
-                    # }
-                    # if ($InputObject.HasNewLine) {
-                    #     $searchString += "`n"
-                    # }
+                    $searchString = $InputObject.SegmentDelimiter
+                    if ($InputObject.HasCarriageReturn) {
+                        $searchString += "`r"
+                    }
+                    if ($InputObject.HasNewLine) {
+                        $searchString += "`n"
+                    }
                     $searchString += "GE*"
                     $seIdx = $InputObject.Body.IndexOf($searchString, $stIdx, [System.StringComparison]::InvariantCulture) + 1 + $newlineLength
                     $transactionSetBody = $InputObject.Body.Substring($stIdx, $seIdx - $stIdx)
                 }
 
-                $ts = internal_GetEdiTransactionSetOutputObject($InputObject)
+                $ts = internal_GetEdiTransactionSetOutputObject -InputObject $InputObject -ExcludeProperties 'Body','Lines'
                 $ts.Body = $transactionSetBody
                 
                 #Write-Host "{start}:$($stIdx) {end}:$($seIdx)"    
@@ -284,18 +272,17 @@ function Get-EdiTransactionSet {
                     $transactionSet = New-Object –TypeName PSObject
 
                     # copy input object note properties (except for Lines string array)
-                    if (-Not $SkipInputProperties) {
-                        foreach($prop in $InputObject.PsObject.Properties) {
-                            # Exclude 'Lines' property; is redunadant and unnecessary
-                            if( $prop.Name -ne 'Lines') {
-                                # Alias properties need to be handled differently than NoteProperties (see the value parameter)
-                                switch ($prop.MemberType.value__) {
-                                    ([System.Management.Automation.PSMemberTypes]::AliasProperty.value__) {$transactionSet | Add-Member –MemberType $prop.MemberType –Name $prop.Name –Value $prop.ReferencedMemberName |Out-Null}  
-                                    ([System.Management.Automation.PSMemberTypes]::NoteProperty.value__) {$transactionSet | Add-Member –MemberType $prop.MemberType –Name $prop.Name –Value $prop.Value |Out-Null}  
-                                }
+                    foreach($prop in $InputObject.PsObject.Properties) {
+                        # Exclude 'Lines' property; is redunadant and unnecessary
+                        if( $prop.Name -ne 'Lines') {
+                            # Alias properties need to be handled differently than NoteProperties (see the value parameter)
+                            switch ($prop.MemberType.value__) {
+                                ([System.Management.Automation.PSMemberTypes]::AliasProperty.value__) {$transactionSet | Add-Member –MemberType $prop.MemberType –Name $prop.Name –Value $prop.ReferencedMemberName |Out-Null}  
+                                ([System.Management.Automation.PSMemberTypes]::NoteProperty.value__) {$transactionSet | Add-Member –MemberType $prop.MemberType –Name $prop.Name –Value $prop.Value |Out-Null}  
                             }
                         }
                     }
+
                     # ST properties
                     $st01 = $segments[0].ToString().Split($InputObject.ElementDelimiter).Get(1)
                     $transactionSet | Add-Member –MemberType NoteProperty –Name ST01 -Value $st01 |Out-Null
