@@ -193,25 +193,16 @@ function Get-EdiTransactionSet {
 #>
 [cmdletbinding()]
     Param (
-        [parameter(ValueFromPipeline = $true, Mandatory = $true)][PSObject] $InputObject
+        [parameter(ValueFromPipeline = $true, Mandatory = $true)][PSObject] $InputObject,
+        [parameter(ValueFromPipeline = $false)][switch] $FilteredOutput
     )
     Begin {}
 
     Process {
-        Write-Verbose "Processing $($InputObject.Name)"
-
-        # TODO: make internal regex reserved char escape function
-
-        # process
-        # if inbound matchinfo
-            # handle wrapped/unwrapped conditions
-            # filtered output
-        # else
-            # all output
-        
+        Write-Verbose "Processing $($InputObject.Name)"        
         $regExSegmentDelimiter = [System.Text.RegularExpressions.Regex]::Escape($InputObject.SegmentDelimiter)
         $regExElementDelimiter = [System.Text.RegularExpressions.Regex]::Escape($InputObject.ElementDelimiter)
-        $tranSetMatchInfo = Select-String -InputObject $InputObject.Body -Pattern "$($regExSegmentDelimiter)\r?\n?ST$($regExElementDelimiter)" -AllMatches
+        $stMatchInfo = Select-String -InputObject $InputObject.Body -Pattern "$($regExSegmentDelimiter)\r?\n?ST$($regExElementDelimiter)" -AllMatches
 
         # calculate the length of new line char(s). Could be 0, 1, or 2
         $newlineLength = 0
@@ -245,16 +236,17 @@ function Get-EdiTransactionSet {
 
             $OutputObject = internal_GetEdiTransactionSetOutputObject -InputObject $InputObject -ExcludeProperties 'Body','Lines'
             $OutputObject.Body = $transactionSetBody
-            
+
+            # Set ST01, ST02 properties
+            $stSegmentAsString = $transactionSetBody.Substring(0, $transactionSetBody.IndexOf($InputObject.SegmentDelimiter))
+            $stSegments = $stSegmentAsString.Split($InputObject.ElementDelimiter)
+            $OutputObject.ST01 = $stSegments[1]
+            $OutputObject.ST02 = $stSegments[2]
+
             # If input is piped in from from Select-String, use the match info to filter the output
-            if ($InputObject.MatchInfo) {
+            if ($InputObject.MatchInfo -and $FilteredOutput) {
                 foreach($m in $InputObject.MatchInfo.Matches) {
                     if($m.Index -gt $stIdx -and $m.Index -lt $seIdx) {
-                        $stSegmentAsString = $transactionSetBody.Substring(0, $transactionSetBody.IndexOf($InputObject.SegmentDelimiter))
-                        $stSegments = $stSegmentAsString.Split($InputObject.ElementDelimiter)
-                        $OutputObject.ST01 = $stSegments[1]
-                        $OutputObject.ST02 = $stSegments[2]
-
                         Write-Output $OutputObject
                         break
                     }
@@ -264,97 +256,6 @@ function Get-EdiTransactionSet {
                 Write-Output $OutputObject
             }
         }
-
-        ######################################################################################
-
-        # # If input object is from Select-String, filter the output using the inbound MatchInfo
-        # if ($InputObject.MatchInfo) {
-
-        #     # For wrapped files, the Line property will be the entire file contents. Remove for perf
-        #     $InputObject.MatchInfo.Line = [string]::Empty
-
-        #     # Get positions of the start of each ST segment
-        #     # todo: handle the unwrapped case using line number and index
-        #     # todo: handle element delimiters that need regex escaping
-        #     $stMatchInfo = Select-String -InputObject $InputObject.Body -Pattern ($InputObject.SegmentDelimiter + '\r?\n?ST\*') -AllMatches
-
-        #     # calculate the length of new line char(s). Could be 0, 1, or 2
-        #     $newlineLength = 0
-        #     if ($InputObject.HasCarriageReturn) {
-        #         $newlineLength += 1
-        #     }
-        #     if ($InputObject.HasNewLine) {
-        #         $newlineLength += 1
-        #     }
-            
-        #     $transactionSetBody = ""
-        #     for($i=0; $i -lt $stMatchInfo.Matches.Count; $i++) {
-        #         $stIdx = $stMatchInfo.Matches[$i].Index + $InputObject.SegmentDelimiter.Length + $newlineLength
-        #         # treat last match as special case to determine where SE segment is
-        #         if ($i -ne ($stMatchInfo.Matches.Count - 1)) {
-        #             $seIdx = $stMatchInfo.Matches[$i+1].Index + $InputObject.SegmentDelimiter.Length + $newlineLength
-        #             $transactionSetBody = $InputObject.Body.Substring($stIdx, $seIdx - $stIdx)
-        #         }
-        #         else {
-        #             $searchString = $InputObject.SegmentDelimiter
-        #             if ($InputObject.HasCarriageReturn) {
-        #                 $searchString += "`r"
-        #             }
-        #             if ($InputObject.HasNewLine) {
-        #                 $searchString += "`n"
-        #             }
-        #             $searchString += "GE*"
-        #             $seIdx = $InputObject.Body.IndexOf($searchString, $stIdx, [System.StringComparison]::InvariantCulture) + $InputObject.SegmentDelimiter.Length + $newlineLength
-        #             $transactionSetBody = $InputObject.Body.Substring($stIdx, $seIdx - $stIdx)
-        #         }
-
-        #         $OutputObject = internal_GetEdiTransactionSetOutputObject -InputObject $InputObject -ExcludeProperties 'Body','Lines'
-        #         $OutputObject.Body = $transactionSetBody
-                
-        #         <# TODO: 
-        #             Wrapped source will use Matches and Index
-        #             Unwrapped source will use LineNumber. I'm not sure how to use that with st/se index                
-        #         #>
-        #         foreach($m in $InputObject.MatchInfo.Matches) {
-        #             if($m.Index -gt $stIdx -and $m.Index -lt $seIdx) {
-        #                 $stSegmentAsString = $transactionSetBody.Substring(0, $transactionSetBody.IndexOf($InputObject.SegmentDelimiter))
-        #                 $stSegments = $stSegmentAsString.Split($InputObject.ElementDelimiter)
-        #                 $OutputObject.ST01 = $stSegments[1]
-        #                 $OutputObject.ST02 = $stSegments[2]
-
-        #                 Write-Output $OutputObject
-        #                 break
-        #             }
-        #         }    
-        #     }
-        # }
-        # else {
-        #     [System.Collections.ArrayList] $segments = $null
-        #     [bool]$inTransactionSet = $false
-
-        #     foreach($line in $InputObject.Lines) {
-        #         if ($line.StartsWith("ST*835*")) {
-        #             $segments = New-Object System.Collections.ArrayList
-        #             $inTransactionSet = $true
-        #         }
-        
-        #         if ($inTransactionSet) {
-        #             $segments.Add($line) |Out-Null
-        #         }
-
-        #         if ($line.StartsWith("SE*")) {
-        #             $OutputObject = internal_GetEdiTransactionSetOutputObject -InputObject $InputObject -ExcludeProperties 'Body','Lines'
-                    
-        #             # ST properties
-        #             $OutputObject.ST01 = $segments[0].ToString().Split($InputObject.ElementDelimiter).Get(1)
-        #             $OutputObject.ST02 = $segments[0].ToString().Split($InputObject.ElementDelimiter).Get(2)
-
-        #             Write-Output $OutputObject
-        #             $segments = $null
-        #             $inTransactionSet = $false
-        #         } # if
-        #     } # foreach
-        # } #else
         
     } # Process
     End {}  
