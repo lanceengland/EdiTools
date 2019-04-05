@@ -125,7 +125,9 @@
             $outputObject | Add-Member -MemberType NoteProperty -Name ReceiverId -Value $isaSegments[8].TrimEnd() |Out-Null
             $outputObject | Add-Member -MemberType AliasProperty -Name SenderQualifier -Value ISA05 |Out-Null
             $outputObject | Add-Member -MemberType NoteProperty -Name SenderId -Value $isaSegments[6].TrimEnd() |Out-Null
-            $outputObject | Add-Member -MemberType ScriptProperty -Name Lines -Value { $this.Body -split $this.SegmentDelimiter + "\r?\n?" }
+            $outputObject | Add-Member -MemberType ScriptProperty -Name Lines -Value { 
+                $this.Body -split $this.SegmentDelimiter + "\r?\n?"
+            }
 
             # Pass-thru the Select-String pattern (if applicable)
             if ($InputObject -is [Microsoft.PowerShell.Commands.MatchInfo]) {
@@ -217,10 +219,10 @@ function Get-EdiTransactionSet {
             $transactionSetBody = ""
             $matchesCount = $stMatchInfo.Matches.Count
             for($i=0; $i -lt $matchesCount; $i++) {
-                $stIdx = $stMatchInfo.Matches[$i].Index + 1 + $newlineLength
+                $stIdx = $stMatchInfo.Matches[$i].Index + $InputObject.SegmentDelimiter.Length + $newlineLength
                 # treat last match as special case to determine where SE segment is
                 if ($i -ne ($matchesCount - 1)) {
-                    $seIdx = $stMatchInfo.Matches[$i+1].Index + 1 + $newlineLength
+                    $seIdx = $stMatchInfo.Matches[$i+1].Index + $InputObject.SegmentDelimiter.Length + $newlineLength
                     $transactionSetBody = $InputObject.Body.Substring($stIdx, $seIdx - $stIdx)
                 }
                 else {
@@ -232,23 +234,22 @@ function Get-EdiTransactionSet {
                         $searchString += "`n"
                     }
                     $searchString += "GE*"
-                    $seIdx = $InputObject.Body.IndexOf($searchString, $stIdx, [System.StringComparison]::InvariantCulture) + 1 + $newlineLength
+                    $seIdx = $InputObject.Body.IndexOf($searchString, $stIdx, [System.StringComparison]::InvariantCulture) + $InputObject.SegmentDelimiter.Length + $newlineLength
                     $transactionSetBody = $InputObject.Body.Substring($stIdx, $seIdx - $stIdx)
                 }
 
-                $ts = internal_GetEdiTransactionSetOutputObject -InputObject $InputObject -ExcludeProperties 'Body','Lines'
-                $ts.Body = $transactionSetBody
+                $OutputObject = internal_GetEdiTransactionSetOutputObject -InputObject $InputObject -ExcludeProperties 'Body','Lines'
+                $OutputObject.Body = $transactionSetBody
                 
-                #Write-Host "{start}:$($stIdx) {end}:$($seIdx)"    
-                #Write-Host $transactionSetBody
-                #Write-Host
+                # TODO: Add ST,SE, Tran..., etc values to properties  
+
                 <# TODO: 
                     Wrapped source will use Matches and Index
                     Unwrapped source will use LineNumber. I'm not sure how to use that with st/se index                
                 #>
                 foreach($m in $InputObject.MatchInfo.Matches) {
                     if($m.Index -gt $stIdx -and $m.Index -lt $seIdx) {
-                        Write-Output $ts
+                        Write-Output $OutputObject
                         break
                     }
                 }    
