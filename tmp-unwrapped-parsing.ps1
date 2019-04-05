@@ -10,3 +10,7 @@ $unwrappedString = Get-Content -Path 'C:\Users\Lance\Desktop\FILES\GitHub\EdiToo
 
 $stMiUnwrapped = Select-String -InputObject $unwrappedString -Pattern ('~' + '\r?\n?ST\*') -AllMatches
 
+
+foreach($s in ('BPR', 9), ('TRN', 2)) {
+    Write-Host "$($s[0]) : $($s[1])"
+}

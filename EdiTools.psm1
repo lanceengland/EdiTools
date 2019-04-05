@@ -289,14 +289,40 @@ function Get-Edi835 {
 
     Process {
         Write-Verbose "Processing $($InputObject.Name) ST02=$($InputObject.ST02)"
+        $regExSegmentDelimiter = [System.Text.RegularExpressions.Regex]::Escape($InputObject.SegmentDelimiter)
+        $regExElementDelimiter = [System.Text.RegularExpressions.Regex]::Escape($InputObject.ElementDelimiter)
+        
+        # calculate the length of new line char(s). Could be 0, 1, or 2
+        $newlineLength = 0
+        if ($InputObject.HasCarriageReturn) {
+            $newlineLength += 1
+        }
+        if ($InputObject.HasNewLine) {
+            $newlineLength += 1
+        }
 
         # Add 835 specifc properties
-        $bpr09 = $InputObject.Segments[1].ToString().Split($InputObject.ElementDelimiter).Get(9)
-        $InputObject | Add-Member –MemberType NoteProperty –Name BPR09 -Value $bpr09 |Out-Null
+        # BPR09
+        $mi = Select-String -InputObject $InputObject.Body -Pattern "$($regExSegmentDelimiter)\r?\n?BPR$($regExElementDelimiter)" -AllMatches
+        if ($mi) {
+            $startIdx = $mi.Matches[0].Index + $InputObject.SegmentDelimiter.Length + $newlineLength
+            $endIdx = $InputObject.Body.IndexOf($regExSegmentDelimiter, $startIdx, [System.StringComparison]::InvariantCulture)
+            $segmentAsString = $InputObject.Body.Substring($startIdx, $endIdx - $startIdx)
+            $elements = $segmentAsString.Split($InputObject.ElementDelimiter)            
+            $InputObject | Add-Member –MemberType NoteProperty –Name BPR09 -Value $elements[9] |Out-Null
+        }
 
-        $trn02 = $InputObject.Segments[2].ToString().Split($InputObject.ElementDelimiter).Get(2)
-        $InputObject | Add-Member –MemberType NoteProperty –Name TRN02 -Value $trn02 |Out-Null
+        # TRN02
+        $mi = Select-String -InputObject $InputObject.Body -Pattern "$($regExSegmentDelimiter)\r?\n?TRN$($regExElementDelimiter)" -AllMatches
+        if ($mi) {
+            $startIdx = $mi.Matches[0].Index + $InputObject.SegmentDelimiter.Length + $newlineLength
+            $endIdx = $InputObject.Body.IndexOf($regExSegmentDelimiter, $startIdx, [System.StringComparison]::InvariantCulture)
+            $segmentAsString = $InputObject.Body.Substring($startIdx, $endIdx - $startIdx)
+            $elements = $segmentAsString.Split($InputObject.ElementDelimiter)            
+            $InputObject | Add-Member –MemberType NoteProperty –Name TRN02 -Value $elements[2] |Out-Null
+        }
 
+        # Add alias
         $InputObject | Add-Member -MemberType AliasProperty -Name BankAccount -Value BPR09
         $InputObject | Add-Member -MemberType AliasProperty -Name TransactionNumber -Value TRN02
         
