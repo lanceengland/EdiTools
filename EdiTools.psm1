@@ -241,7 +241,7 @@ function Get-EdiTransactionSet {
                 $OutputObject = internal_GetEdiTransactionSetOutputObject -InputObject $InputObject -ExcludeProperties 'Body','Lines'
                 $OutputObject.Body = $transactionSetBody
                 
-                # TODO: Add ST,SE, Tran..., etc values to properties  
+                  
 
                 <# TODO: 
                     Wrapped source will use Matches and Index
@@ -249,6 +249,13 @@ function Get-EdiTransactionSet {
                 #>
                 foreach($m in $InputObject.MatchInfo.Matches) {
                     if($m.Index -gt $stIdx -and $m.Index -lt $seIdx) {
+
+                        # TODO: Add ST,SE, Tran..., etc values to properties
+                        $stSegmentAsString = $transactionSetBody.Substring(0, $transactionSetBody.IndexOf($InputObject.SegmentDelimiter))
+                        $stSegments = $stSegmentAsString.Split($InputObject.ElementDelimiter)
+                        $OutputObject.ST01 = $stSegments[1]
+                        $OutputObject.ST02 = $stSegments[2]
+
                         Write-Output $OutputObject
                         break
                     }
