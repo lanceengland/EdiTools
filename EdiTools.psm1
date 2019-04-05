@@ -220,11 +220,10 @@ function Get-EdiTransactionSet {
             }
             
             $transactionSetBody = ""
-            $matchesCount = $stMatchInfo.Matches.Count
-            for($i=0; $i -lt $matchesCount; $i++) {
+            for($i=0; $i -lt $stMatchInfo.Matches.Count; $i++) {
                 $stIdx = $stMatchInfo.Matches[$i].Index + $InputObject.SegmentDelimiter.Length + $newlineLength
                 # treat last match as special case to determine where SE segment is
-                if ($i -ne ($matchesCount - 1)) {
+                if ($i -ne ($stMatchInfo.Matches.Count - 1)) {
                     $seIdx = $stMatchInfo.Matches[$i+1].Index + $InputObject.SegmentDelimiter.Length + $newlineLength
                     $transactionSetBody = $InputObject.Body.Substring($stIdx, $seIdx - $stIdx)
                 }
