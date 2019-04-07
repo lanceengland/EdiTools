@@ -194,7 +194,7 @@ function Get-EdiTransactionSet {
 [cmdletbinding()]
     Param (
         [parameter(ValueFromPipeline = $true, Mandatory = $true)][PSObject] $InputObject,
-        [parameter(ValueFromPipeline = $false)][switch] $FilteredOutput
+        [parameter(ValueFromPipeline = $false)][switch] $FilterOutput
     )
     Begin {}
 
@@ -244,7 +244,7 @@ function Get-EdiTransactionSet {
             $OutputObject.ST02 = $stSegments[2]
 
             # If input is piped in from from Select-String, use the match info to filter the output
-            if ($InputObject.MatchInfo -and $FilteredOutput) {
+            if ($InputObject.MatchInfo -and $FilterOutput) {
                 foreach($m in $InputObject.MatchInfo.Matches) {
                     if($m.Index -gt $stIdx -and $m.Index -lt $seIdx) {
                         Write-Output $OutputObject
