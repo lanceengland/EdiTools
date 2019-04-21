@@ -48,3 +48,4 @@ Get-ChildItem -Path '<your path here>\EdiTools\Sample Files\*.edi' |
     Get-EdiTransactionSet |
     Get-Edi835 |
     Where-Object {$_.TransactionNumber -eq '051036622050010'}
+
