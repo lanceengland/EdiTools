@@ -154,18 +154,21 @@ function Get-EdiFile {
             $outputObject | Add-Member -MemberType AliasProperty -Name SenderQualifier -Value ISA05 |Out-Null
             $outputObject | Add-Member -MemberType NoteProperty -Name SenderId -Value $isaSegments[6].TrimEnd() |Out-Null
             $outputObject | Add-Member -MemberType ScriptProperty -Name Lines -Value { 
-                $this.Body -split $this.SegmentDelimiter + "\r?\n?"
+                $this.Body -split ([System.Text.RegularExpressions.Regex]::Escape($this.SegmentDelimiter) + "\r?\n?")
             }
 
             # Pass-thru the Select-String pattern (if applicable)
             if ($InputObject -is [Microsoft.PowerShell.Commands.MatchInfo]) {
                 $outputObject | Add-Member -MemberType NoteProperty -Name MatchInfo -Value $InputObject |Out-Null
             }
-            $outputObject | Add-Member -MemberType NoteProperty -Name HasCarriageReturn -Value $hasCarriageReturn |Out-Null
+            $outputObject | Add-Member -MemberType NoteProperty -Name HasCarriageReturn -Value $hasCarriageReturn |Out-Null      
+            # Can't decide which property name is better, so both for now
+            $outputObject | Add-Member -MemberType NoteProperty -Name HasLineFeed -Value $hasNewLine |Out-Null
             $outputObject | Add-Member -MemberType NoteProperty -Name HasNewLine -Value $hasNewLine |Out-Null
             
             Write-Output $outputObject
         }
+        
     
         End {}
 }
