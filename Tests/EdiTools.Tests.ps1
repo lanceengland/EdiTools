@@ -131,7 +131,9 @@ Describe "Get-EdiTransactionSet" {
             Set-Content -Path $path -Value $testFile["FileContent"]
 
             $ediTransactionSets = [System.Collections.ArrayList]::new()
-            Get-EdiFile -InputObject $path | Get-EdiTransactionSet |ForEach-Object { $ediTransactionSets.Add($_) }
+            Get-EdiFile -InputObject $path | 
+                Get-EdiTransactionSet |
+                ForEach-Object { $ediTransactionSets.Add($_) }
             
             It "has expected # of transaction sets" {
                 $ediTransactionSets.Count | Should Be $numberOfTransactionSets
@@ -152,6 +154,17 @@ Describe "Get-EdiTransactionSet" {
                 $ediTransactionSets[1].ST02 | Should Be "99999"
                 $ediTransactionSets[1].TransactionSetControlNumber | Should Be "99999"
             }
+
+            # testing Select-String output as input
+            $ediTransactionSets.Clear()
+            Select-String -Path $path -Pattern "ThisLastNameOccursOnlyOnce" |
+                Get-EdiFile |
+                Get-EdiTransactionSet -FilterOutput |
+                ForEach-Object { $ediTransactionSets.Add($_) }
+            
+                It "should only have one transaction set output that matches the Select-String result" {
+                    $ediTransactionSets.Count | Should Be 1
+                }
         }
     }
 }
