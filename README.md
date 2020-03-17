@@ -3,6 +3,11 @@
 EdiTools is a repository of PowerShell scripts for parsing EDI X12 files. The core use case is the following: A simple way to search and display specific transaction sets from a directory of EDI files. 
 
 ## Design Goals
+TODO: this is the new list
+Fast (C#, minimize string copies)
+Composable (Hierarchy File -> Groups -> Transaction Sets -> Specific type)
+Search/Display (limited properties, not a full blown API)
+PowerShell 2 compatible (for now, only way to use at current client)
 
 ### Composable
 

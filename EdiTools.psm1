@@ -1,31 +1,547 @@
-﻿function internal_GetEdiTransactionSetOutputObject([psobject] $InputObject, [string[]] $ExcludeProperties) {
-    $transactionSet = New-Object –TypeName PSObject
-    $transactionSet | Add-Member –MemberType NoteProperty –Name Body -Value $null |Out-Null
-    $transactionSet | Add-Member –MemberType ScriptProperty –Name Segments -Value {
-        $this.Body -split $this.SegmentDelimiter + "\r?\n?"
-    } |Out-Null
+﻿Add-Type -TypeDefinition @"
+using System;
 
-    # ST properties
-    $transactionSet | Add-Member –MemberType NoteProperty –Name ST01 -Value $null |Out-Null
-    $transactionSet | Add-Member –MemberType NoteProperty –Name ST02 -Value $null |Out-Null
+namespace EdiTools
+{
+    public abstract class Segment
+    {
+        private EdiTools.Index _index;
+        internal EdiTools.Index Index { get { return _index; } set { _index = value; } }
+    }
+     public class ISA : Segment
+    {
+        #region private
+        private string _isa01;
+        private string _isa02;
+        private string _isa03;
+        private string _isa04;
+        private string _isa05;
+        private string _isa06;
+        private string _isa07;
+        private string _isa08;
+        private string _isa09;
+        private string _isa10;
+        private string _isa11;
+        private string _isa12;
+        private string _isa13;
+        private string _isa14;
+        private string _isa15;
+        private string _isa16;
+        #endregion
 
-    # ST aliases
-    $transactionSet | Add-Member -MemberType AliasProperty -Name TransactionSetIdentifierCode -Value ST01 |Out-Null
-    $transactionSet | Add-Member -MemberType AliasProperty -Name TransactionSetControlNumber -Value ST02 |Out-Null
- 
-    foreach($prop in $InputObject.PsObject.Properties) {
-        # Exclude 'Lines' property; is redunadant and unnecessary
-        # $prop.Name -ne 'Body' -and $prop.Name -ne 'Lines'
-        if( -not ($ExcludeProperties -contains $prop.Name) ) {
-            # Alias properties need to be handled differently than NoteProperties (see the value parameter)
-            switch ($prop.MemberType.value__) {
-                ([System.Management.Automation.PSMemberTypes]::AliasProperty.value__) {$transactionSet | Add-Member –MemberType $prop.MemberType –Name $prop.Name –Value $prop.ReferencedMemberName |Out-Null}  
-                ([System.Management.Automation.PSMemberTypes]::NoteProperty.value__) {$transactionSet | Add-Member –MemberType $prop.MemberType –Name $prop.Name –Value $prop.Value |Out-Null}  
+        public string ISA01 { get { return _isa01; } set { _isa01 = value; } }
+        public string ISA02 { get { return _isa02; } set { _isa02 = value; } }
+        public string ISA03 { get { return _isa03; } set { _isa03 = value; } }
+        public string ISA04 { get { return _isa04; } set { _isa04 = value; } }
+        public string ISA05 { get { return _isa05; } set { _isa05 = value; } }
+        public string ISA06 { get { return _isa06; } set { _isa06 = value; } }
+        public string ISA07 { get { return _isa07; } set { _isa07 = value; } }
+        public string ISA08 { get { return _isa08; } set { _isa08 = value; } }
+        public string ISA09 { get { return _isa09; } set { _isa09 = value; } }
+        public string ISA10 { get { return _isa10; } set { _isa10 = value; } }
+        public string ISA11 { get { return _isa11; } set { _isa11 = value; } }
+        public string ISA12 { get { return _isa12; } set { _isa12 = value; } }
+        public string ISA13 { get { return _isa13; } set { _isa13 = value; } }
+        public string ISA14 { get { return _isa14; } set { _isa14 = value; } }
+        public string ISA15 { get { return _isa15; } set { _isa15 = value; } }
+        public string ISA16 { get { return _isa16; } set { _isa16 = value; } }
+    }
+    public class IEA : Segment
+    {
+        #region private
+        private string _iea01;
+        private string _iea02;
+        #endregion
+        public string IEA01 { get { return _iea01; } set { _iea01 = value; } }
+        public string IEA02 { get { return _iea02; } set { _iea02 = value; } }
+    }
+    public class Interchange
+    {
+        private EdiTools.ISA _isa = new EdiTools.ISA();
+        private EdiTools.IEA _iea = new EdiTools.IEA();
+        private System.DateTime _interchangedate = System.DateTime.MinValue;
+        internal Interchange(EdiTools.EdiFile parent, EdiTools.Index isa, EdiTools.Index iea)
+        {
+            string[] elements = parent.GetRawText().Substring(isa.Start, isa.Length).Split(parent.Delimiter.Element);
+            _isa.ISA01 = elements[1];
+            _isa.ISA02 = elements[2];
+            _isa.ISA03 = elements[3];
+            _isa.ISA04 = elements[4];
+            _isa.ISA05 = elements[5];
+            _isa.ISA06 = elements[6];
+            _isa.ISA07 = elements[7];
+            _isa.ISA08 = elements[8];
+            _isa.ISA09 = elements[9];
+            _isa.ISA10 = elements[10];
+            _isa.ISA11 = elements[11];
+            _isa.ISA12 = elements[12];
+            _isa.ISA13 = elements[13];
+            _isa.ISA14 = elements[14];
+            _isa.ISA15 = elements[15];
+            _isa.ISA16 = elements[16];
+            _isa.Index = isa;
+
+            elements = parent.GetRawText().Substring(iea.Start, iea.Length).Split(new char[] { parent.Delimiter.Element }, System.StringSplitOptions.None);
+            _iea.IEA01 = elements[1];
+            _iea.IEA02 = elements[2];
+            _iea.Index = iea;
+        }
+        public EdiTools.ISA ISA { get { return _isa; } }
+        public EdiTools.IEA IEA { get { return _iea; } }
+        public string SenderId { get { return _isa.ISA06.Trim(); } }
+        public string ReceiverId { get { return _isa.ISA08.Trim(); } }
+        public System.DateTime Date
+        {
+            get
+            {
+                if (_interchangedate == System.DateTime.MinValue)
+                {
+                    _interchangedate = System.DateTime.ParseExact(_isa.ISA09 + _isa.ISA10, "yyMMddHHmm", System.Globalization.CultureInfo.InvariantCulture);
+                }
+                return _interchangedate;
             }
         }
-    }   
-    $transactionSet
+        public string ControlNumber { get { return _isa.ISA13; } }
+    }
+    public class GS : Segment
+    {
+        #region private
+        private string _gs01;
+        private string _gs02;
+        private string _gs03;
+        private string _gs04;
+        private string _gs05;
+        private string _gs06;
+        private string _gs07;
+        private string _gs08;
+        #endregion
+        public string GS01 { get { return _gs01; } set { _gs01 = value; } }
+        public string GS02 { get { return _gs02; } set { _gs02 = value; } }
+        public string GS03 { get { return _gs03; } set { _gs03 = value; } }
+        public string GS04 { get { return _gs04; } set { _gs04 = value; } }
+        public string GS05 { get { return _gs05; } set { _gs05 = value; } }
+        public string GS06 { get { return _gs06; } set { _gs06 = value; } }
+        public string GS07 { get { return _gs07; } set { _gs07 = value; } }
+        public string GS08 { get { return _gs08; } set { _gs08 = value; } }
+    }
+    public class GE : Segment
+    {
+        #region private
+        private string _ge01;
+        private string _ge02;
+        #endregion
+        public string GE01 { get { return _ge01; } internal set { _ge01 = value; } }
+        public string GE02 { get { return _ge02; } internal set { _ge02 = value; } }
+    }
+    public class ST : Segment
+    {
+        private string _st01;
+        private string _st02;
+        public string ST01 { get { return _st01; } internal set { _st01 = value; } }
+        public string ST02 { get { return _st02; } internal set { _st02 = value; } }
+    }
+    public class SE : Segment
+    {
+        private string _se01;
+        private string _se02;
+        public string SE01 { get { return _se01; } internal set { _se01 = value; } }
+        public string SE02 { get { return _se02; } internal set { _se02 = value; } }
+    }
+    public class Delimiter
+    {
+        #region private
+        private char _element;
+        private char _component;
+        private char _segment;
+        private string _line = string.Empty;
+        #endregion
+        public char Element { get { return _element; } set { _element = value; } }
+        public char Component { get { return _component; } set { _component = value; } }
+        public char Segment { get { return _segment; } set { _segment = value; } }
+        public string Line { get { return _line; } set { _line = value; } }
+    }
+    public struct Index
+    {
+        public string Name;
+        public int Start;
+        public int Length;
+    }
+    public class EdiFile
+    {
+        #region private
+        private string _filename;
+        private string _directoryname;
+        private EdiTools.Delimiter _delimiter = new EdiTools.Delimiter();
+        private bool _isunwrapped = false;
+        private string _rawtext;
+        private EdiTools.Index[] _fileindexes;
+
+        private EdiTools.Interchange _interchange;
+        private EdiTools.FunctionalGroup[] _functionalgroups;        
+        #endregion
+        public EdiFile(string filePath)
+        {
+            try
+            {
+                this._rawtext = System.IO.File.ReadAllText(filePath);
+
+                _delimiter.Element = _rawtext[103];
+                _delimiter.Component = _rawtext[104];
+                _delimiter.Segment = _rawtext[105];
+
+                /* Determine if wrapped (no line breaks) or unwrapped (line breaks) */
+                if (_rawtext[106] == (char)13 || _rawtext[106] == (char)10) /* carriage-return or new-line */
+                {
+                    _isunwrapped = true;
+
+                    if (_rawtext[107] == (char)10) /* if the next char is new-line, assume cr/lf */
+                    {
+                        _delimiter.Line = _rawtext.Substring(106, 2);
+                    }
+                    else
+                    {
+                        _delimiter.Line = _rawtext[106].ToString();
+                    }
+                }
+
+                _filename = System.IO.Path.GetFileName(filePath);
+                _directoryname = System.IO.Path.GetDirectoryName(filePath);
+
+                // start position and length for every segment/line in the file. The foundation for the parsing the file
+                _fileindexes = this.GetIndexes();
+
+                // to parse interchange
+                EdiTools.Index isa = new EdiTools.Index();
+                EdiTools.Index iea = new EdiTools.Index();
+
+                // to parse functional groups
+                System.Collections.Generic.List<EdiTools.FunctionalGroup> functionalGroups = new System.Collections.Generic.List<FunctionalGroup>();
+                
+                EdiTools.Index gs = new EdiTools.Index();
+                EdiTools.Index ge = new EdiTools.Index();
+
+                foreach (EdiTools.Index idx in _fileindexes)
+                {
+                    // interchange
+                    if (idx.Name == "ISA") { isa = idx; }
+                    if (idx.Name == "IEA") 
+                    { 
+                        iea = idx;
+                        _interchange = new EdiTools.Interchange(this, isa, iea);
+                    }
+
+                    // functional group
+                    if (idx.Name == "GS") 
+                    { 
+                        gs = idx;
+                    }
+
+                    if (idx.Name == "GE")
+                    {
+                        ge = idx;
+                        EdiTools.FunctionalGroup group = new EdiTools.FunctionalGroup(this, gs, ge);
+                        functionalGroups.Add(group);
+                    }
+                }
+
+                _functionalgroups = functionalGroups.ToArray();
+            }
+            catch (System.Exception)
+            {
+                throw;
+            }
+        }
+
+        #region methods
+        internal Index[] GetIndexes()
+        {
+            System.Collections.Generic.List<EdiTools.Index> indexes = new System.Collections.Generic.List<EdiTools.Index>();
+            EdiTools.Index idx = new EdiTools.Index();
+            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+            bool doRead = true;
+            for (int i = 0; i < _rawtext.Length; i++)
+            {
+                char c = _rawtext[i];
+                if (doRead && c != _delimiter.Element && c != (char)10 && c != (char)13)  // 10:new line, 13:carriage return
+                {
+                    sb.Append(c);
+                }
+
+                if (c == _delimiter.Element) { doRead = false; }
+
+                if (c == _delimiter.Segment)
+                {
+                    doRead = true;
+
+                    idx.Length = i - idx.Start;
+                    idx.Name = sb.ToString();
+                    indexes.Add(idx);
+
+                    // reset for next loop
+                    sb = new System.Text.StringBuilder();
+                    idx = new EdiTools.Index();
+                    idx.Start = i + 1 + _delimiter.Line.Length; /* The + 1 is to move the index past the segment delimiter position */
+                }
+            }
+
+            return indexes.ToArray();
+
+            /*
+            System.Collections.Generic.List<EdiTools.SegmentIndex> list = new System.Collections.Generic.List<SegmentIndex>();
+            EdiTools.SegmentIndex lineIndex = new EdiTools.SegmentIndex();
+            for (int i = 0; i < _rawtext.Length; i++)
+            {
+                if (_rawtext[i] == _delimeters.Segment)
+                {
+                    lineIndex.Length = i - lineIndex.Start;
+                    list.Add(lineIndex);
+
+                    // reset for next loop
+                    lineIndex = new EdiTools.SegmentIndex();
+                    lineIndex.Start = i + 1 + _delimeters.Line.Length;
+                }
+            }
+            return list.ToArray();
+            */
+        }
+        public string GetRawText() { return _rawtext; }
+        #endregion
+
+        #region properties
+        public string FileName { get { return _filename; } set { _filename = value; } }
+        public string DirectoryName { get { return _directoryname; } set { _directoryname = value; } }
+        public string FullPath { get { return System.IO.Path.Combine(_directoryname, _filename); } }
+        public EdiTools.Delimiter Delimiter { get { return _delimiter; } }
+        public bool IsUnwrapped { get { return _isunwrapped; } }
+        public EdiTools.Interchange Interchange { get { return _interchange; } }
+        public EdiTools.FunctionalGroup[] FunctionalGroups { get { return _functionalgroups; } }
+        #endregion
+    }
+    public class FunctionalGroup
+    {
+        internal FunctionalGroup(EdiTools.EdiFile parent, EdiTools.Index gs, EdiTools.Index ge)
+        {
+            _parent = parent;
+
+            // gs
+            string[] elements = parent.GetRawText().Substring(gs.Start, gs.Length).Split(new char[] { parent.Delimiter.Element, parent.Delimiter.Segment }, System.StringSplitOptions.None);
+            _gs.GS01 = elements[1];
+            _gs.GS02 = elements[2];
+            _gs.GS03 = elements[3];
+            _gs.GS04 = elements[4];
+            _gs.GS05 = elements[5];
+            _gs.GS06 = elements[6];
+            _gs.GS07 = elements[7];
+            _gs.GS08 = elements[8];
+            _gs.Index = gs;
+
+            // ge
+            elements = parent.GetRawText().Substring(ge.Start, ge.Length).Split(new char[] { parent.Delimiter.Element }, System.StringSplitOptions.None);
+            _ge.GE01 = elements[1];
+            _ge.GE02 = elements[2];
+            _ge.Index = ge;
+
+            // st/se indexes Note: This is optimized to work with one functional group. It will function with more than one, 
+            // but will scan the entire file indexes x # of groups. For now, I decided to not make a identical copy of indexes for the most common case
+            System.Collections.Generic.List<EdiTools.Index> segments = new System.Collections.Generic.List<Index>();
+            foreach (EdiTools.Index idx in _parent.GetIndexes())
+            {
+                if (idx.Start <= _gs.Index.Start || idx.Start >= _ge.Index.Start)
+                {
+                    continue;
+                }
+
+                segments.Add(idx);
+
+                if (idx.Name == "ST")
+                {
+                    stIndexes.Add(idx);
+                }
+
+                if (idx.Name == "SE")
+                {
+                    seIndexes.Add(idx);
+                    _transetIndexes.Add(segments.ToArray());
+                    segments.Clear();
+                }
+            }
+        }
+        #region private
+        private EdiTools.EdiFile _parent;
+        private EdiTools.GS _gs = new EdiTools.GS();
+        private EdiTools.GE _ge = new EdiTools.GE();
+        private System.DateTime _groupdate = System.DateTime.MinValue;
+
+        private System.Collections.Generic.List<EdiTools.Index[]> _transetIndexes = new System.Collections.Generic.List<Index[]>();
+
+        private System.Collections.Generic.List<EdiTools.Index> stIndexes = new System.Collections.Generic.List<Index>();
+        private System.Collections.Generic.List<EdiTools.Index> seIndexes = new System.Collections.Generic.List<Index>();
+        #endregion
+        public EdiTools.GS GS { get { return _gs; } }
+        public EdiTools.GE GE { get { return _ge; } }
+
+        public System.DateTime GroupDate
+        {
+            get
+            {
+                if (_groupdate == System.DateTime.MinValue)
+                {
+                    _groupdate = System.DateTime.ParseExact(_gs.GS04 + _gs.GS05.PadRight(8, '0'), "yyyyMMddHHmmssff", System.Globalization.CultureInfo.InvariantCulture);
+                }
+                return _groupdate;
+            }
+        }
+        internal EdiTools.EdiFile EdiFile { get { return _parent; } }
+        public EdiTools.TransactionSet[] GetTransactionSets()
+        {
+            System.Collections.Generic.List<EdiTools.TransactionSet> transactionSets = new System.Collections.Generic.List<EdiTools.TransactionSet>();
+            foreach(EdiTools.Index[] idx in _transetIndexes)
+            {
+                transactionSets.Add(new EdiTools.TransactionSet(this, idx));
+            }
+            return transactionSets.ToArray();
+        }
+    }
+    public class TransactionSet
+    {
+        public TransactionSet(EdiTools.FunctionalGroup parent, EdiTools.Index st, EdiTools.Index se)
+        {
+            _parent = parent;
+
+            string[] elements = _parent.EdiFile.GetRawText().Substring(st.Start, st.Length).Split(new char[] { parent.EdiFile.Delimiter.Element }, System.StringSplitOptions.None);
+            _st = new EdiTools.ST();
+            _st.ST01 = elements[1];
+            _st.ST02 = elements[2];
+            _st.Index = st;
+
+            elements = _parent.EdiFile.GetRawText().Substring(se.Start, se.Length).Split(new char[] { parent.EdiFile.Delimiter.Element }, System.StringSplitOptions.None);
+            _se = new EdiTools.SE();
+            _se.SE01 = elements[1];
+            _se.SE02 = elements[2];
+            _se.Index = se;
+        }
+
+        public TransactionSet(EdiTools.FunctionalGroup parent, EdiTools.Index[] indexes)
+        {
+            _parent = parent;
+            _indexes = indexes;
+
+            EdiTools.Index st = indexes[0];
+            EdiTools.Index se = indexes[indexes.Length - 1];
+
+            string[] elements = _parent.EdiFile.GetRawText().Substring(st.Start, st.Length).Split(new char[] { parent.EdiFile.Delimiter.Element }, System.StringSplitOptions.None);
+            _st = new EdiTools.ST();
+            _st.ST01 = elements[1];
+            _st.ST02 = elements[2];
+            _st.Index = st;
+
+            elements = _parent.EdiFile.GetRawText().Substring(se.Start, se.Length).Split(new char[] { parent.EdiFile.Delimiter.Element }, System.StringSplitOptions.None);
+            _se = new EdiTools.SE();
+            _se.SE01 = elements[1];
+            _se.SE02 = elements[2];
+            _se.Index = se;
+        }
+
+        private EdiTools.FunctionalGroup _parent;
+        private EdiTools.ST _st;
+        private EdiTools.SE _se;
+
+        private EdiTools.Index[] _indexes;
+        public EdiTools.ST ST { get { return _st; } }
+        public EdiTools.SE SE { get { return _se; } }
+        public string ID { get { return _st.ST01; } }
+        public string ControlNumber { get { return _st.ST02; } }
+
+        internal EdiTools.Index[] Indexes { get { return _indexes; } }
+        public EdiTools.FunctionalGroup FunctionalGroup { get { return _parent; } }
+        public string GetRawText()
+        {
+            return _parent.EdiFile.GetRawText().Substring(_st.Index.Start, _se.Index.Start + _se.Index.Length - _st.Index.Start + 1 + _parent.EdiFile.Delimiter.Line.Length);
+        }
+        //public string Body { get { return this.GetRawText(); } }
+        public string Unwrap()
+        {
+            if (_parent.EdiFile.IsUnwrapped)
+            {
+                return this.GetRawText();
+            }
+            else
+            {
+                return this.GetRawText().Replace(_parent.EdiFile.Delimiter.Segment.ToString(), _parent.EdiFile.Delimiter.Segment.ToString() + System.Environment.NewLine);
+            }
+        }
+    }
+    public class Edi835 
+    { 
+        public Edi835(EdiTools.TransactionSet transactionSet)
+        {
+            if (transactionSet.ID != "835") { throw new ArgumentException("Expected an EDI transaction set of type 835."); }
+
+            _transactionSet = transactionSet;
+
+            foreach (EdiTools.Index idx in transactionSet.Indexes)
+            {
+                string[] elements;
+                if (idx.Name == "BPR")
+                {
+                    elements = transactionSet.FunctionalGroup.EdiFile.GetRawText().Substring(idx.Start, idx.Length).Split(transactionSet.FunctionalGroup.EdiFile.Delimiter.Element);
+                    
+                    System.Decimal.TryParse(elements[2], out _totalActualProviderPaymentAmount);
+                    _senderBankAccountNumber = elements[9];
+                }
+                if (idx.Name == "TRN")
+                {
+                    elements = transactionSet.FunctionalGroup.EdiFile.GetRawText().Substring(idx.Start, idx.Length).Split(transactionSet.FunctionalGroup.EdiFile.Delimiter.Element);
+                    _checkorEFTTraceNumber = elements[2];
+                }
+                if (idx.Name == "N1")
+                {
+                    elements = transactionSet.FunctionalGroup.EdiFile.GetRawText().Substring(idx.Start, idx.Length).Split(transactionSet.FunctionalGroup.EdiFile.Delimiter.Element);
+                    if (elements[1] == "PR")
+                    {
+                        _payer = elements[2];
+                    }
+                    if (elements[1] == "PE")
+                    {
+                        _payee = elements[2];
+                        break;
+                    }
+                }
+            }
+        }
+
+        EdiTools.TransactionSet _transactionSet;
+        private string _payer;
+        private string _payee;
+        private string _senderBankAccountNumber;
+        private string _checkorEFTTraceNumber;
+        private decimal _totalActualProviderPaymentAmount;
+        public string Payer { get { return _payer; } }
+        public string Payee { get { return _payee; } }
+        public string SenderBankAccountNumber { get { return _senderBankAccountNumber; } }
+        public string CheckorEFTTraceNumber { get { return _checkorEFTTraceNumber; } }
+        public decimal TotalActualProviderPaymentAmount { get { return _totalActualProviderPaymentAmount; } }
+        public TransactionSet TransactionSet { get { return _transactionSet; } }
+        public string GetRawText() { return _transactionSet.GetRawText(); }
+        public string Body
+        { 
+            get 
+            {
+                if (_transactionSet.FunctionalGroup.EdiFile.IsUnwrapped)
+                {
+                    return _transactionSet.GetRawText();
+                }
+                else
+                {
+                    return Unwrap();
+                }
+            } 
+        }
+        public string Unwrap() { return _transactionSet.Unwrap(); }
+    }
 }
+"@
+
 function Get-EdiFile {
 <#
     .SYNOPSIS
@@ -68,6 +584,7 @@ function Get-EdiFile {
         }
     
         Process {
+            # TODO: change this to iteration, to support passing array of file names in paramater
             if ($InputObject -is [System.Object[]]) {return}
             
             [string] $fileName = $null
@@ -91,87 +608,17 @@ function Get-EdiFile {
                 return
             }
 
-            $fileList.Add($fileName, $null)
+            $fileList.Add($fileName, $null) |Out-Null
 
-            $fileContents = [System.IO.File]::ReadAllText($fileName)
-            <#
-                Character 104 is the element delimiter
-                Character 105 is the sub-element delimiter 
-                Character 106 is the segment delimiter
-            #>
-            $elementDelimiter = $fileContents[103]
-            $componentDelimiter = $fileContents[104]
-            $segmentDelimiter = $fileContents[105]
-            $char106 = $fileContents[106]
-            $char107 = $fileContents[107]
-            [bool] $hasCarriageReturn = $false
-            [bool] $hasNewLine = $false
+            $ediFile = New-Object EdiTools.EdiFile -ArgumentList $fileName
 
-            if ($char106 -eq "`r") {
-                $hasCarriageReturn = $true
-            }
-            if ($char106 -eq "`n" -or $char107 -eq "`n") {
-                $hasNewLine = $true
-            }
-
-            # TODO: Check if EDI X12 file
-
-            $outputObject = New-Object –TypeName PSObject
-            # Basic file properties
-            $outputObject | Add-Member –MemberType NoteProperty –Name Name –Value ([System.Io.Path]::GetFileName($fileName)) |Out-Null
-            $outputObject | Add-Member –MemberType NoteProperty –Name DirectoryName –Value ([System.Io.Path]::GetDirectoryName($fileName)) |Out-Null
-            $outputObject | Add-Member –MemberType NoteProperty –Name Body –Value $fileContents |Out-Null
-            
-            #EDI parsing properties
-            $outputObject | Add-Member –MemberType NoteProperty –Name ElementDelimiter –Value $elementDelimiter |Out-Null
-            $outputObject | Add-Member –MemberType NoteProperty –Name ComponentDelimiter –Value $componentDelimiter |Out-Null
-            $outputObject | Add-Member –MemberType NoteProperty –Name SegmentDelimiter –Value $segmentDelimiter |Out-Null
-            
-            # ISA values
-            $isaSegments = $fileContents.Substring(0, 105).Split($elementDelimiter)
-            $outputObject | Add-Member –MemberType NoteProperty –Name ISA01 –Value $isaSegments[1] |Out-Null
-            $outputObject | Add-Member –MemberType NoteProperty –Name ISA02 –Value $isaSegments[2] |Out-Null
-            $outputObject | Add-Member –MemberType NoteProperty –Name ISA03 –Value $isaSegments[3] |Out-Null
-            $outputObject | Add-Member –MemberType NoteProperty –Name ISA04 –Value $isaSegments[4] |Out-Null
-            $outputObject | Add-Member –MemberType NoteProperty –Name ISA05 –Value $isaSegments[5] |Out-Null
-            $outputObject | Add-Member –MemberType NoteProperty –Name ISA06 –Value $isaSegments[6] |Out-Null
-            $outputObject | Add-Member –MemberType NoteProperty –Name ISA07 –Value $isaSegments[7] |Out-Null
-            $outputObject | Add-Member –MemberType NoteProperty –Name ISA08 –Value $isaSegments[8] |Out-Null
-            $outputObject | Add-Member –MemberType NoteProperty –Name ISA09 –Value $isaSegments[9] |Out-Null
-            $outputObject | Add-Member –MemberType NoteProperty –Name ISA10 –Value $isaSegments[10] |Out-Null
-            $outputObject | Add-Member –MemberType NoteProperty –Name ISA11 –Value $isaSegments[11] |Out-Null
-            $outputObject | Add-Member –MemberType NoteProperty –Name ISA12 –Value $isaSegments[12] |Out-Null
-            $outputObject | Add-Member –MemberType NoteProperty –Name ISA13 –Value $isaSegments[13] |Out-Null
-            $outputObject | Add-Member –MemberType NoteProperty –Name ISA14 –Value $isaSegments[14] |Out-Null
-            $outputObject | Add-Member –MemberType NoteProperty –Name ISA15 –Value $isaSegments[15] |Out-Null
-            
-            # Convenience properties
-            $outputObject | Add-Member -MemberType AliasProperty -Name InterchangeControlNumber -Value ISA13 |Out-Null
-            $interchangeDate = [DateTime]::ParseExact($isaSegments[9], 'yymmdd', [DateTime].CultureInfo.InvariantCulture)
-            $outputObject | Add-Member -MemberType NoteProperty -Name InterchangeDate -Value $interchangeDate |Out-Null
-            $outputObject | Add-Member -MemberType AliasProperty -Name ReceiverQualifier -Value ISA07 |Out-Null
-            $outputObject | Add-Member -MemberType NoteProperty -Name ReceiverId -Value $isaSegments[8].TrimEnd() |Out-Null
-            $outputObject | Add-Member -MemberType AliasProperty -Name SenderQualifier -Value ISA05 |Out-Null
-            $outputObject | Add-Member -MemberType NoteProperty -Name SenderId -Value $isaSegments[6].TrimEnd() |Out-Null
-            $outputObject | Add-Member -MemberType ScriptProperty -Name Lines -Value { 
-                $this.Body -split ([System.Text.RegularExpressions.Regex]::Escape($this.SegmentDelimiter) + "\r?\n?")
-            }
-
-            # Pass-thru the Select-String pattern (if applicable)
-            if ($InputObject -is [Microsoft.PowerShell.Commands.MatchInfo]) {
-                $outputObject | Add-Member -MemberType NoteProperty -Name MatchInfo -Value $InputObject |Out-Null
-            }
-            $outputObject | Add-Member -MemberType NoteProperty -Name HasCarriageReturn -Value $hasCarriageReturn |Out-Null      
-            # Can't decide which property name is better, so both for now
-            $outputObject | Add-Member -MemberType NoteProperty -Name HasLineFeed -Value $hasNewLine |Out-Null
-            $outputObject | Add-Member -MemberType NoteProperty -Name HasNewLine -Value $hasNewLine |Out-Null
-            
-            Write-Output $outputObject
+            Write-Output $ediFile
         }
         
     
         End {}
 }
+
 function Get-EdiTransactionSet {
 <#
     .SYNOPSIS
@@ -196,70 +643,20 @@ function Get-EdiTransactionSet {
 #>
 [cmdletbinding()]
     Param (
-        [parameter(ValueFromPipeline = $true, Mandatory = $true)][PSObject] $InputObject,
+        [parameter(ValueFromPipeline = $true, Mandatory = $true)][EdiTools.EdiFile] $InputObject,
         [parameter(ValueFromPipeline = $false)][switch] $FilterOutput
     )
     Begin {}
 
     Process {
-        Write-Verbose "Processing $($InputObject.Name)"        
-        $regExSegmentDelimiter = [System.Text.RegularExpressions.Regex]::Escape($InputObject.SegmentDelimiter)
-        $regExElementDelimiter = [System.Text.RegularExpressions.Regex]::Escape($InputObject.ElementDelimiter)
-        $stMatchInfo = Select-String -InputObject $InputObject.Body -Pattern "$($regExSegmentDelimiter)\r?\n?ST$($regExElementDelimiter)" -AllMatches
-
-        # calculate the length of new line char(s). Could be 0, 1, or 2
-        $newlineLength = 0
-        if ($InputObject.HasCarriageReturn) {
-            $newlineLength += 1
-        }
-        if ($InputObject.HasNewLine) {
-            $newlineLength += 1
-        }
-
-        $transactionSetBody = ""
-        for($i=0; $i -lt $stMatchInfo.Matches.Count; $i++) {
-            $stIdx = $stMatchInfo.Matches[$i].Index + $InputObject.SegmentDelimiter.Length + $newlineLength
-            # treat last match as special case to determine where SE segment is
-            if ($i -ne ($stMatchInfo.Matches.Count - 1)) {
-                $seIdx = $stMatchInfo.Matches[$i+1].Index + $InputObject.SegmentDelimiter.Length + $newlineLength
-                $transactionSetBody = $InputObject.Body.Substring($stIdx, $seIdx - $stIdx)
-            }
-            else {
-                $searchString = $InputObject.SegmentDelimiter
-                if ($InputObject.HasCarriageReturn) {
-                    $searchString += "`r"
-                }
-                if ($InputObject.HasNewLine) {
-                    $searchString += "`n"
-                }
-                $searchString += "GE$($InputObject.ElementDelimiter)"
-                $seIdx = $InputObject.Body.IndexOf($searchString, $stIdx, [System.StringComparison]::InvariantCulture) + $InputObject.SegmentDelimiter.Length + $newlineLength
-                $transactionSetBody = $InputObject.Body.Substring($stIdx, $seIdx - $stIdx)
-            }
-
-            $OutputObject = internal_GetEdiTransactionSetOutputObject -InputObject $InputObject -ExcludeProperties 'Body','Lines'
-            $OutputObject.Body = $transactionSetBody
-
-            # Set ST01, ST02 properties
-            $stSegmentAsString = $transactionSetBody.Substring(0, $transactionSetBody.IndexOf($InputObject.SegmentDelimiter))
-            $stSegments = $stSegmentAsString.Split($InputObject.ElementDelimiter)
-            $OutputObject.ST01 = $stSegments[1]
-            $OutputObject.ST02 = $stSegments[2]
-
-            # If input is piped in from from Select-String, use the match info to filter the output
-            if ($InputObject.MatchInfo -and $FilterOutput) {
-                foreach($m in $InputObject.MatchInfo.Matches) {
-                    if($m.Index -gt $stIdx -and $m.Index -lt $seIdx) {
-                        Write-Output $OutputObject
-                        break
-                    }
-                }
-            }
-            else {
-                Write-Output $OutputObject
+        [EdiTools.EdiFile] $f = $InputObject
+        Write-Verbose "Processing $($f.FileName)"
+        foreach($fg in $f.FunctionalGroups) {
+            foreach($ts in $fg.GetTransactionSets()) {
+                Write-Output $ts
             }
         }
-        
+
     } # Process
     End {}  
 }
@@ -286,53 +683,17 @@ function Get-Edi835 {
 #>
 [cmdletbinding()]
     Param (
-        [parameter(ValueFromPipeline = $true, Mandatory = $true)][PSObject] $InputObject
+        [parameter(ValueFromPipeline = $true, Mandatory = $true)][EdiTools.TransactionSet] $InputObject
     )
     Begin {}
 
     Process {
-        Write-Verbose "Processing $($InputObject.Name) ST02=$($InputObject.ST02)"
-        $regExSegmentDelimiter = [System.Text.RegularExpressions.Regex]::Escape($InputObject.SegmentDelimiter)
-        $regExElementDelimiter = [System.Text.RegularExpressions.Regex]::Escape($InputObject.ElementDelimiter)
-        
-        # calculate the length of new line char(s). Could be 0, 1, or 2
-        $newlineLength = 0
-        if ($InputObject.HasCarriageReturn) {
-            $newlineLength += 1
-        }
-        if ($InputObject.HasNewLine) {
-            $newlineLength += 1
-        }
-
-        # Add 835 specifc properties
-        # BPR09
-        $mi = Select-String -InputObject $InputObject.Body -Pattern "$($regExSegmentDelimiter)\r?\n?BPR$($regExElementDelimiter)" -AllMatches
-        if ($mi) {
-            $startIdx = $mi.Matches[0].Index + $InputObject.SegmentDelimiter.Length + $newlineLength
-            $endIdx = $InputObject.Body.IndexOf($regExSegmentDelimiter, $startIdx, [System.StringComparison]::InvariantCulture)
-            $segmentAsString = $InputObject.Body.Substring($startIdx, $endIdx - $startIdx)
-            $elements = $segmentAsString.Split($InputObject.ElementDelimiter)            
-            $InputObject | Add-Member –MemberType NoteProperty –Name BPR09 -Value $elements[9] |Out-Null
-        }
-
-        # TRN02
-        $mi = Select-String -InputObject $InputObject.Body -Pattern "$($regExSegmentDelimiter)\r?\n?TRN$($regExElementDelimiter)" -AllMatches
-        if ($mi) {
-            $startIdx = $mi.Matches[0].Index + $InputObject.SegmentDelimiter.Length + $newlineLength
-            $endIdx = $InputObject.Body.IndexOf($regExSegmentDelimiter, $startIdx, [System.StringComparison]::InvariantCulture)
-            $segmentAsString = $InputObject.Body.Substring($startIdx, $endIdx - $startIdx)
-            $elements = $segmentAsString.Split($InputObject.ElementDelimiter)            
-            $InputObject | Add-Member –MemberType NoteProperty –Name TRN02 -Value $elements[2] |Out-Null
-        }
-
-        # Add alias
-        $InputObject | Add-Member -MemberType AliasProperty -Name BankAccount -Value BPR09
-        $InputObject | Add-Member -MemberType AliasProperty -Name TransactionNumber -Value TRN02
-        
-        Write-Output $InputObject
+        [EdiTools.TransactionSet] $ts = $InputObject
+        Write-Verbose "Processing ST01 = $($ts.ControlNumber)"
+        $edi835 = New-Object EdiTools.Edi835 -ArgumentList $ts
+        Write-Output $edi835
     }
     End {}  
 }
 
 Export-ModuleMember -Function Get-EdiFile, Get-EdiTransactionSet, Get-Edi835
-
