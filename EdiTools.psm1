@@ -308,9 +308,9 @@ namespace EdiTools
         #endregion
 
         #region properties
-        public string FileName { get { return _filename; } set { _filename = value; } }
+        public string Name { get { return _filename; } set { _filename = value; } }
         public string DirectoryName { get { return _directoryname; } set { _directoryname = value; } }
-        public string FullPath { get { return System.IO.Path.Combine(_directoryname, _filename); } }
+        public string FullName { get { return System.IO.Path.Combine(_directoryname, _filename); } }
         public EdiTools.Delimiter Delimiter { get { return _delimiter; } }
         public bool IsUnwrapped { get { return _isunwrapped; } }
         public EdiTools.Interchange Interchange { get { return _interchange; } }
