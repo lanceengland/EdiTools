@@ -60,29 +60,34 @@ namespace EdiTools.Tests
             foreach (var f in _testFiles)
             {
                 Assert.IsNotNull(f);
-                Assert.AreEqual("TheSender", f.Interchange.SenderId);
-                Assert.AreEqual("TheReceiver", f.Interchange.ReceiverId);
-                Assert.AreEqual("000000001", f.Interchange.ControlNumber);
-                Assert.AreEqual("00", f.Interchange.ISA.ISA01);
-                Assert.AreEqual("          ", f.Interchange.ISA.ISA02);
-                Assert.AreEqual("00", f.Interchange.ISA.ISA03);
-                Assert.AreEqual("          ", f.Interchange.ISA.ISA04);
-                Assert.AreEqual("ZZ", f.Interchange.ISA.ISA05);
-                Assert.AreEqual("TheSender      ", f.Interchange.ISA.ISA06);
-                Assert.AreEqual("ZZ", f.Interchange.ISA.ISA07);
-                Assert.AreEqual("TheReceiver    ", f.Interchange.ISA.ISA08);
-                Assert.AreEqual("190101", f.Interchange.ISA.ISA09);
-                Assert.AreEqual("1200", f.Interchange.ISA.ISA10);
-                Assert.AreEqual("<", f.Interchange.ISA.ISA11);
-                Assert.AreEqual("00501", f.Interchange.ISA.ISA12);
-                Assert.AreEqual("000000001", f.Interchange.ISA.ISA13);
-                Assert.AreEqual("0", f.Interchange.ISA.ISA14);
-                Assert.AreEqual("P", f.Interchange.ISA.ISA15);
-                Assert.AreEqual(":", f.Interchange.ISA.ISA16);
+                Assert.AreEqual(f.Interchange.SenderId, "TheSender");
+                Assert.AreEqual(f.Interchange.ReceiverId, "TheReceiver");
+                Assert.AreEqual(f.Interchange.ControlNumber, "000000001");
 
-                Assert.AreEqual('~', f.Delimiter.Segment);
-                Assert.AreEqual('*', f.Delimiter.Element);
-                Assert.AreEqual(':', f.Delimiter.Component);
+                Assert.AreEqual(f.Interchange.ISA.ISA01, "00");
+                Assert.AreEqual(f.Interchange.ISA.ISA02, "          ");
+                Assert.AreEqual(f.Interchange.ISA.ISA03, "00");
+                Assert.AreEqual(f.Interchange.ISA.ISA04, "          ");
+                Assert.AreEqual(f.Interchange.ISA.ISA05, "ZZ");
+                Assert.AreEqual(f.Interchange.ISA.ISA06, "TheSender      ");
+                Assert.AreEqual(f.Interchange.ISA.ISA07, "ZZ");
+                Assert.AreEqual(f.Interchange.ISA.ISA08, "TheReceiver    ");
+                Assert.AreEqual(f.Interchange.ISA.ISA09, "190101");
+                Assert.AreEqual(f.Interchange.ISA.ISA10, "1200");
+                Assert.AreEqual(f.Interchange.ISA.ISA11, "<");
+                Assert.AreEqual(f.Interchange.ISA.ISA12, "00501");
+                Assert.AreEqual(f.Interchange.ISA.ISA13, "000000001");
+                Assert.AreEqual(f.Interchange.ISA.ISA14, "0");
+                Assert.AreEqual(f.Interchange.ISA.ISA15, "P");
+                Assert.AreEqual(f.Interchange.ISA.ISA16, ":");
+
+                Assert.AreEqual(f.Delimiter.Segment, '~');
+                Assert.AreEqual(f.Delimiter.Element, '*');
+                Assert.AreEqual(f.Delimiter.Component, ':');
+                // TODO: How to test line delimiters i.e. empty string, cr/lf, or lf
+
+                Assert.AreEqual(f.Interchange.IEA.IEA01, "1");
+                Assert.AreEqual(f.Interchange.IEA.IEA02, "000000001");
             }
         }
 
@@ -91,14 +96,33 @@ namespace EdiTools.Tests
         {
             foreach (var f in _testFiles)
             {
-                var grp = f.FunctionalGroups[0];
-                Assert.AreEqual("HP", grp.GS.GS01);
+                var grp = f.FunctionalGroups[0]; // test file only has one group TODO: Add second group to test file
+                Assert.AreEqual(grp.GS.GS01, "HP");
+                Assert.AreEqual(grp.GS.GS02, "TheSender");
+                Assert.AreEqual(grp.GS.GS03, "TheReceiver");
+                Assert.AreEqual(grp.GS.GS04, "20190101");
+                Assert.AreEqual(grp.GS.GS05, "12000000");
+                Assert.AreEqual(grp.GS.GS06, "1");
+                Assert.AreEqual(grp.GS.GS07, "X");
+                Assert.AreEqual(grp.GS.GS08, "005010X221A1");
+
+                Assert.AreEqual(grp.GE.GE01, "10");
+                Assert.AreEqual(grp.GE.GE01, "2");
             }
         }
 
+        [Test]
+        public void TestTransactionSet()
+        {
+            foreach (var f in _testFiles)
+            {
+                var ts = f.FunctionalGroups[0].GetTransactionSets(); // test file only has one group TODO: Add second group to test file
+                Assert.AreEqual(ts.Length, 2);
+            }
+        }
 
+        #region private
         private EdiTools.EdiFile[] _testFiles;
-
         private string _testData = @"ISA*00*          *00*          *ZZ*TheSender      *ZZ*TheReceiver    *190101*1200*<*00501*000000001*0*P*:~
 GS*HP*TheSender*TheReceiver*20190101*12000000*1*X*005010X221A1~
 ST*835*112233*005010X221A1~
@@ -164,6 +188,7 @@ DTM*472*20120124~
 PLB*1215193883*20121231*90*3.95~
 SE*31*112299~
 GE*10*2~
-IEA*1*000000001~";
+IEA*1*000000001~"; 
+        #endregion
     }
 }
