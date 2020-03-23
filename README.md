@@ -1,13 +1,14 @@
 # EdiTools
 
-EdiTools is a repository of PowerShell scripts for parsing EDI X12 files. The core use case is the following: A simple way to search and display specific transaction sets from a directory of EDI files. 
+EdiTools is a repository of PowerShell scripts for parsing EDI X12 files. The core use case is the following: A simple way to search and display specific transaction sets from a directory of EDI files.
 
 ## Design Goals
-TODO: this is the new list
-Fast (C#, minimize string copies)
+TODO: this is the new list. Will be revamping the entire readme
+Fast (C# for heavy-lifting, minimize string thrashing) without sacrificing usability
 Composable (Hierarchy File -> Groups -> Transaction Sets -> Specific type)
-Search/Display (limited properties, not a full blown API)
+SPecifc use case: Search and Display (limited properties, not a full blown API)
 PowerShell 2 compatible (for now, only way to use at current client)
+Compatible with unwrapped (single line) files, or wrapped (CR/LF, or LF-only)
 
 ### Composable
 
@@ -17,7 +18,7 @@ For example, Get-EdiFile returns the data for an EDI X12 file, with the ISA head
 
 Piping the output object into Get-EdiTransactionSet splits the file into transaction sets and adds a few transaction set-specific properties.
 
-Piping the output of that into Get-Edi835 (assuming the transaction set is from an 835), adds a few 835-specific properties. 
+Piping the output of that into Get-Edi835 (assuming the transaction set is from an 835), adds a few 835-specific properties.
 
 ### Performant
 
@@ -37,3 +38,5 @@ Future development may include:
 * Add a standardized method to return segments from the EdiFile/TransactionSet
 * An default object formatter. For example, the default output for Get-EdiTransaction could be file name it came from followed by the formatted body of the transaction set.
 * Add typename to output objects and check for typename on consuming functions.
+* Move to .net Core and PowerShell Core
+* Other module support (Docker?)
