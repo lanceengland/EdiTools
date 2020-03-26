@@ -1,6 +1,6 @@
 # EdiTools
 
-EdiTools is a PowerShell module creating for a spcific use case: an easy way to search, filter, and display EDI file contents.
+EdiTools is a PowerShell module creating for a specific use case: an easy way to search, filter, and display EDI file contents.
 
 ## Design Goals
 
@@ -18,13 +18,13 @@ The "heavy lifting" of the file parsing is done in C\# code. PowerShell provides
 
 ### Composable
 
-Each cmdlet works together, using the previous cmdlet output as input. For example, Get-EdiFile | Get-TransactionSet | Get-Edi835. The first cmdlets are general EDI functions, where the last cmdlet is a specific EDI format, in this case 835. The Get-Edi835 is the only format-specific cmdlet at this time.
+Each cmdlet works together, using the previous cmdlet output as input. For example, Get-EdiFile | Get-TransactionSet | Get-Edi835. The first cmdlets are general EDI functions, where the last cmdlet is a specific EDI format, in this case 835. The Get-Edi835 is the only format-specific cmdlet currently.
 
 Each cmdlet exposes more properties on the output object. In addition, the first cmdlet, Get-EdiFile, support piped input from both Get-ChildItem and Select-String, to simplify searching for specific files while leveraging this module.
 
 ## Narrow Scope
 
-This is not a full-fledged EDI parser. It has one purpose, search, filter, and display EDI file contents. As such, only frequently needed  properties are exposed.
+This is not a full-fledged EDI parser. It has one purpose, search, filter, and display EDI file contents. As such, only frequently needed properties are exposed.
 
 ## PowerShell 2 Compatible
 
