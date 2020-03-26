@@ -34,6 +34,18 @@ This is a personal constraint, but as of now, I needed the module to be PowerShe
 
 The parsing process needed to be agnostic to "wrapped" (single line), or "unwrapped" (CR/LF, or LF-only) files
 
+## Installation
+
+If you don't want to clone the repo, and just want to install the PowerShell module:
+
+1. [Download the EdiTools.psm1 file](https://github.com/lanceengland/EdiTools/raw/master/PowerShell/EdiTools.psm1)
+
+2. Save the file to c:\Users\<user name>Documents\WindowsPowerShell\Modules\EdiTools
+
+3. Right-click on the file and choose Properties -> Click the Unblock button
+
+4. From a PowerShell prompt, type "Import-Module EdiTools -Verbose" (the -Verbose is optional, but will give you conformation the cmdlets installed).
+
 ## Project Roadmap
 
 Future development may include:
