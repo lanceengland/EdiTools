@@ -22,15 +22,15 @@ Each cmdlet works together, using the previous cmdlet output as input. For examp
 
 Each cmdlet exposes more properties on the output object. In addition, the first cmdlet, Get-EdiFile, support piped input from both Get-ChildItem and Select-String, to simplify searching for specific files while leveraging this module.
 
-## Narrow Scope
+### Narrow Scope
 
 This is not a full-fledged EDI parser. It has one purpose, search, filter, and display EDI file contents. As such, only frequently needed properties are exposed.
 
-## PowerShell 2 Compatible
+### PowerShell 2 Compatible
 
 This is a personal constraint, but as of now, I needed the module to be PowerShell 2 compatible.
 
-## Line-break Agnostic
+### Line-break Agnostic
 
 The parsing process needed to be agnostic to "wrapped" (single line), or "unwrapped" (CR/LF, or LF-only) files
 
