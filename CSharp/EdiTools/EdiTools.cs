@@ -188,7 +188,10 @@ namespace EdiTools
             try
             {
                 this._rawtext = System.IO.File.ReadAllText(filePath);
-
+                if (this._rawtext.Substring(0, 3) != "ISA")
+                {
+                    throw new System.IO.InvalidDataException("No ISA segment found. Not an EDI file.");
+                }
                 _delimiter.Element = _rawtext[103];
                 _delimiter.Component = _rawtext[104];
                 _delimiter.Segment = _rawtext[105];

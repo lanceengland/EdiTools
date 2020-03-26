@@ -137,8 +137,14 @@ IEA*1*000000001~
     $null = [System.IO.File]::WriteAllText("$TestDrive\wrapped_CrLf.txt", $testData)
 
     Context 'Get-EdiFile'{
-        It 'placeholder' {
-            1 + 1 | Should Be 2 
+        It 'takes a single parameter' {
+            $f = Get-EdiFile "$TestDrive\unwrapped.txt"
+            $f.Count | Should Be 1 
+        }
+
+        It 'takes an array parameter' {
+            $f = Get-EdiFile "$TestDrive\unwrapped.txt", "$TestDrive\wrapped_Lf.txt"
+            $f.Count | Should Be 2
         }
     }
 

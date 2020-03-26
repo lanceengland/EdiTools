@@ -2,6 +2,8 @@
 
 namespace EdiTools.Tests
 {
+    // todo: test for invalid file format
+
     [TestFixture]
     public class EdiToolsShould
     {

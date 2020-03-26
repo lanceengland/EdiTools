@@ -184,7 +184,10 @@ namespace EdiTools
             try
             {
                 this._rawtext = System.IO.File.ReadAllText(filePath);
-
+                if (this._rawtext.Substring(0, 3) != "ISA")
+                {
+                    throw new System.IO.InvalidDataException("No ISA segment found. Not an EDI file.");
+                }
                 _delimiter.Element = _rawtext[103];
                 _delimiter.Component = _rawtext[104];
                 _delimiter.Segment = _rawtext[105];
@@ -545,76 +548,105 @@ namespace EdiTools
 function Get-EdiFile {
 <#
     .SYNOPSIS
-        Reads Edi X12 files, promotes Edi and file properties, and exposes the file content as an array of string(s).
+        Reads Edi X12 files, and promotes Edi interchange and file properties.
     .DESCRIPTION
-        Reads Edi X12 files, promotes Edi and file properties, and exposes the file content as an array of string(s).
-    .PARAMETER InputObject
-        Can be a path, an array of paths, System.IO.FileInfo object, or Microsoft.PowerShell.Commands.MatchInfo object 
+        Reads Edi X12 files, and promotes Edi interchange and file properties. 
+        The EdiFile object gives access to the underlying file contents, but it best used by piping it to Get-EdiTransactionSet
+    .PARAMETER Path
+        An string, or array of strings representing paths to files to be parsed 
+    .PARAMETER FileInfo
+        A System.IO.FileInfo object. The parameter is best used when piped from Get-ChildItem 
+    .PARAMETER Path
+        A Microsoft.PowerShell.Commands.MatchInfo object. This parameter is best used when piped from Select-String
     .NOTES
         Author: Lance England
         Blog: http://lance-england.com
     .EXAMPLE
-        Get-EdiFile -InputObject 'c:\foo.txt' -Verbose
+        Get-EdiFile -Path 'c:\foo.txt'
 
         Simple version, a single file name parameter
     .EXAMPLE
-        Get-EdiFile -InputObject '<your path here>\EdiTools\Sample Files\Sample1.txt', '<your path here>\EdiTools\Sample Files\Sample2.txt'
+        Get-EdiFile -Path 'c:\foo.txt', 'c:\bar.txt'
 
         An array of file names
     .EXAMPLE
-        Get-ChildItem -Path '<your path here>\EdiTools\Sample Files\*.txt' |Get-EdiFile
+        Get-ChildItem -Path 'c:\Sample Files\*.txt' |Get-EdiFile
 
         Pipe in output from Get-ChildItem
     .EXAMPLE
-        Get-ChildItem -Path '<your path here>\EdiTools\Sample Files\*.txt' |Select-String -Pattern 'NM1\*QC\*1\*MOUSE\*MINNIE' |Get-EdiFile
+        Select-String -Path 'c:\Sample Files\*.txt' -Pattern 'NM1\*QC\*1\*MOUSE\*MINNIE' |Get-EdiFile
         
         Pipe in input from Select-String
 #>
     [cmdletbinding()]
-        Param (    
-            [parameter(ValueFromPipeline = $true, Mandatory = $true)] [System.Object] $InputObject
-        )
+    [CmdletBinding(DefaultParameterSetName = 'Path')]
+    param
+    (
+        [Parameter(ParameterSetName = 'Path', 
+                   Position = 0, 
+                   Mandatory = $true)]
+        [string[]] $Path,
+
+        [Parameter(ParameterSetName = 'FileInfo', 
+                   Position = 0, 
+                   Mandatory = $true, 
+                   ValueFromPipeline = $true)]
+        [System.IO.FileInfo] $FileInfo,
+
+        [Parameter(ParameterSetName = 'MatchInfo', 
+                   Position = 0, 
+                   Mandatory = $true, 
+                   ValueFromPipeline = $true)]
+        [Microsoft.PowerShell.Commands.MatchInfo] $MatchInfo
+    )
 
         Begin {
-            # Maintain a string dictionary so we don't waste time processing the same file multiple times (mainly from Select-String input)
+            # Maintain a string dictionary to not parse the same file multiple times from Select-String input
             $fileList = New-Object System.Collections.Specialized.StringDictionary
-            if ($InputObject -is [System.Object[]]) {
-                $InputObject | Get-EdiFile 
-            }
+
+            Write-Verbose @"
+
+_______   _ _ ________         __     
+|  ____|  | (_)__   __|        | |    
+| |__   __| |_   | | ___   ___ | |___ 
+|  __| / _` | |  | |/ _ \ / _ \| / __|
+| |___| (_| | |  | | (_) | (_) | \__ \
+|______\__,_|_|  |_|\___/ \___/|_|___/
+
+https://github.com/lanceengland/EdiTools
+
+"@
         }
     
         Process {
-            # TODO: change this to iteration, to support passing array of file names in paramater
-            if ($InputObject -is [System.Object[]]) {return}
-            
-            [string] $fileName = $null
-            if ($InputObject -is [System.String]) { 
-                $fileName = $InputObject 
-            }
-            if ($InputObject -is [System.IO.FileInfo]) { 
-                $fileName = $InputObject.FullName 
-            }
-            if ($InputObject -is [Microsoft.PowerShell.Commands.MatchInfo]) {
-                $fileName = $InputObject.Path
-            }
-            
-            if (-not [System.IO.File]::Exists($fileName)) { 
-                Write-Error "File $fileName does not exist"    
-                return 
+
+            [string[]] $Files = $null
+
+            $chosenParameterSet = $PSCmdlet.ParameterSetName
+            Switch ($chosenParameterSet)
+            {
+                'Path'      { $Files = $Path } 
+                'FileInfo'  { $Files = @($FileInfo.FullName) } 
+                'MatchInfo' { $Files = @($MatchInfo.Path) }
             }
 
-            if ($fileList.ContainsKey($fileName)) {
-                Write-Verbose "$fileName has already been processed"
-                return
+            foreach($file in $Files) {
+                if (-not [System.IO.File]::Exists($file)) { 
+                    Write-Error "Path not valid: $file"    
+                    continue 
+                }
+
+                if ($fileList.ContainsKey($file)) {
+                    Write-Verbose "[Get-EdiFile] Skipping $file. Reason: Already parsed"
+                    continue
+                }
+
+                Write-Verbose "[Get-EdiFile] Parsing $file"
+                $null = $fileList.Add($file, $null)
+                $ediFile = New-Object EdiTools.EdiFile -ArgumentList $file
+                Write-Output $ediFile
             }
-
-            $fileList.Add($fileName, $null) |Out-Null
-
-            $ediFile = New-Object EdiTools.EdiFile -ArgumentList $fileName
-
-            Write-Output $ediFile
-        }
-        
+        }        
     
         End {}
 }
@@ -622,37 +654,33 @@ function Get-EdiFile {
 function Get-EdiTransactionSet {
 <#
     .SYNOPSIS
-        Splits Edi file contents into individual transaction sets (ST/SE) and promotes additional properties
+        Returns the individual transaction sets (ST/SE) from an EdiFile object and promotes additional properties
     .DESCRIPTION
-        Splits Edi file contents into individual transaction sets (ST/SE) and promotes additional properties
-    .PARAMETER InputObject
-        A PSObject returned from the Get-EdiFile cmdlet       
-    .PARAMETER SkipInputProperties
-        A flag to not copy input properties onto the output PSObject. Default is false.
+        Returns the individual transaction sets (ST/SE) from an EdiFile object and promotes additional properties
+    .PARAMETER EdiFile
+        An EdiFile object returned from the Get-EdiFile cmdlet       
     .NOTES
         Author: Lance England
         Blog: http://lance-england.com
     .EXAMPLE
-        Get-EdiFile -InputObject 'c:\foo.txt' |Get-EdiTransactionSet
+        Get-EdiFile -Path 'c:\foo.txt' |Get-EdiTransactionSet
 
         Extract all transaction sets
     .EXAMPLE
-        Get-EdiFile -InputObject 'c:\foo.txt' |Get-EdiTransactionSet |Where-Object {$_.ST02 -eq '112299'}
+        Get-EdiFile -Path 'c:\foo.txt' |Get-EdiTransactionSet |Where-Object {$_.ST02 -eq '112299'}
 
         Extract all transaction sets and filter on ST02 property          
 #>
 [cmdletbinding()]
     Param (
-        [parameter(ValueFromPipeline = $true, Mandatory = $true)][EdiTools.EdiFile] $InputObject,
-        [parameter(ValueFromPipeline = $false)][switch] $FilterOutput
+        [parameter(ValueFromPipeline = $true, Mandatory = $true)][EdiTools.EdiFile] $EdiFile
     )
     Begin {}
 
     Process {
-        [EdiTools.EdiFile] $f = $InputObject
-        Write-Verbose "Processing $($f.FileName)"
-        foreach($fg in $f.FunctionalGroups) {
+        foreach($fg in $EdiFile.FunctionalGroups) {
             foreach($ts in $fg.GetTransactionSets()) {
+                Write-Verbose "[Get-EdiTransactionSet] Parsing control number $($ts.ControlNumber)"
                 Write-Output $ts
             }
         }
@@ -663,34 +691,36 @@ function Get-EdiTransactionSet {
 function Get-Edi835 {
 <#
     .SYNOPSIS
-        Accepts a PSObject from Get-EdiTransactionSet and promotes 835-specifc properties
+        Accepts a TransactionSet object from Get-EdiTransactionSet and promotes 835-specifc properties
     .DESCRIPTION
-        Accepts a PSObject from Get-EdiTransactionSet and promotes 835-specifc properties
-    .PARAMETER InputObject
-        A PSObject returned from the Get-EdiTransactionSet cmdlet       
+        Accepts a TransactionSet object from Get-EdiTransactionSet and promotes 835-specifc properties
+    .PARAMETER TransactionSet
+        A TransactionSet returned from the Get-EdiTransactionSet cmdlet       
     .NOTES
         Author: Lance England
         Blog: http://lance-england.com
     .EXAMPLE
-        Get-EdiFile -InputObject 'c:\foo.txt' |Get-EdiTransactionSet |Get-Edi835
+        Get-EdiFile -Path 'c:\foo.txt' |Get-EdiTransactionSet |Get-Edi835
 
         Promotes 835-specifc properties
 
     .EXAMPLE
-        Get-EdiFile -InputObject 'c:\foo.txt' |Get-EdiTransactionSet |Where-Object {$_.ST02 -eq '112299'} |Get-Edi835 |Where-Object {$_.TransactionNumber -eq '051036622050010'}
+        Get-EdiFile -Path 'c:\foo.txt' |Get-EdiTransactionSet |
+            Where-Object {$_.ST02 -eq '112299'} |
+            Get-Edi835 |
+            Where-Object {$_.TransactionNumber -eq '051036622050010'}
 
         Filters on 835-specifc properties, TRN02 in this example.     
 #>
 [cmdletbinding()]
     Param (
-        [parameter(ValueFromPipeline = $true, Mandatory = $true)][EdiTools.TransactionSet] $InputObject
+        [parameter(ValueFromPipeline = $true, Mandatory = $true)][EdiTools.TransactionSet] $TransactionSet
     )
     Begin {}
 
     Process {
-        [EdiTools.TransactionSet] $ts = $InputObject
-        Write-Verbose "Processing ST01 = $($ts.ControlNumber)"
-        $edi835 = New-Object EdiTools.Edi835 -ArgumentList $ts
+        $edi835 = New-Object EdiTools.Edi835 -ArgumentList $TransactionSet
+        Write-Verbose "[Get-Edi835] Parsing payment number $($edi835.CheckorEFTTraceNumber)"
         Write-Output $edi835
     }
     End {}  
