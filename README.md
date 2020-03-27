@@ -1,6 +1,6 @@
 # EdiTools
 
-EdiTools is a PowerShell module creating for a specific use case: an easy way to search, filter, and display EDI file contents.
+EdiTools is a PowerShell module to support searching, filtering, and displaying EDI file contents.
 
 ## Design Goals
 
