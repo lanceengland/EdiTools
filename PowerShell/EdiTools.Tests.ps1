@@ -132,19 +132,49 @@ SE*31*112299~
 GE*2*2~
 IEA*1*000000001~
 "@
-    $null = [System.IO.File]::WriteAllText("$TestDrive\unwrapped.txt", $testData.Replace("`r", "").Replace("`n", ""))
-    $null = [System.IO.File]::WriteAllText("$TestDrive\wrapped_Lf.txt", $testData.Replace("`r", ""))
-    $null = [System.IO.File]::WriteAllText("$TestDrive\wrapped_CrLf.txt", $testData)
+    $null = [System.IO.File]::WriteAllText("$TestDrive\wrapped.txt", $testData.Replace("`r", "").Replace("`n", ""))
+    $null = [System.IO.File]::WriteAllText("$TestDrive\unwrapped_Lf.txt", $testData.Replace("`r", ""))
+    $null = [System.IO.File]::WriteAllText("$TestDrive\unwrapped_CrLf.txt", $testData)
 
     Context 'Get-EdiFile'{
         It 'takes a single parameter' {
-            $f = Get-EdiFile "$TestDrive\unwrapped.txt"
+            $f = Get-EdiFile "$TestDrive\wrapped.txt"
+            $f.Count | Should Be 1 
+        }
+
+        It 'parses files with no line-breaks' {
+            $f = Get-EdiFile "$TestDrive\wrapped.txt"
+            $f.Count | Should Be 1 
+        }
+        
+        It 'parses files with LF line-breaks' {
+            $f = Get-EdiFile "$TestDrive\unwrapped_Lf.txt"
+            $f.Count | Should Be 1 
+        }
+
+        It 'parses files with CR/LF line-breaks' {
+            $f = Get-EdiFile "$TestDrive\unwrapped_CrLf.txt"
             $f.Count | Should Be 1 
         }
 
         It 'takes an array parameter' {
-            $f = Get-EdiFile "$TestDrive\unwrapped.txt", "$TestDrive\wrapped_Lf.txt"
+            $f = Get-EdiFile "$TestDrive\wrapped.txt", "$TestDrive\unwrapped_Lf.txt"
             $f.Count | Should Be 2
+        }
+
+        It 'parses each file only once' {
+            $f = Get-EdiFile "$TestDrive\wrapped.txt", "$TestDrive\wrapped.txt"
+            $f.Count | Should Be 1
+        }
+
+        It 'accepts Get-Children as piped input' {
+            Get-ChildItem -Path $TestDrive | Get-EdiFile -OutVariable f
+            $f.Count | Should Be 3
+        }
+
+        It 'accepts Select-String as piped input' {
+            Select-String -Path $TestDrive\*.* -Pattern "ST*835" -SimpleMatch -AllMatches | Get-EdiFile -OutVariable f
+            $f.Count | Should Be 3
         }
     }
 
