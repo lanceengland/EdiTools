@@ -139,10 +139,8 @@ namespace EdiTools
     {
         private string _st01;
         private string _st02;
-        private string _st03;
         public string ST01 { get { return _st01; } internal set { _st01 = value; } }
         public string ST02 { get { return _st02; } internal set { _st02 = value; } }
-        public string ST03 { get { return _st03; } internal set { _st03 = value; } }
     }
     public class SE : Segment
     {
@@ -410,23 +408,6 @@ namespace EdiTools
     }
     public class TransactionSet
     {
-        public TransactionSet(EdiTools.FunctionalGroup parent, EdiTools.Index st, EdiTools.Index se)
-        {
-            _parent = parent;
-
-            string[] elements = _parent.EdiFile.GetRawText().Substring(st.Start, st.Length).Split(new char[] { parent.EdiFile.Delimiter.Element }, System.StringSplitOptions.None);
-            _st = new EdiTools.ST();
-            _st.ST01 = elements[1];
-            _st.ST02 = elements[2];
-            _st.Index = st;
-
-            elements = _parent.EdiFile.GetRawText().Substring(se.Start, se.Length).Split(new char[] { parent.EdiFile.Delimiter.Element }, System.StringSplitOptions.None);
-            _se = new EdiTools.SE();
-            _se.SE01 = elements[1];
-            _se.SE02 = elements[2];
-            _se.Index = se;
-        }
-
         public TransactionSet(EdiTools.FunctionalGroup parent, EdiTools.Index[] indexes)
         {
             _parent = parent;
@@ -439,7 +420,6 @@ namespace EdiTools
             _st = new EdiTools.ST();
             _st.ST01 = elements[1];
             _st.ST02 = elements[2];
-            _st.ST03 = elements[3];
             _st.Index = st;
 
             elements = _parent.EdiFile.GetRawText().Substring(se.Start, se.Length).Split(new char[] { parent.EdiFile.Delimiter.Element }, System.StringSplitOptions.None);
