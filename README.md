@@ -11,7 +11,7 @@ When creating EdiTools, I had specific design goals in mind:
 * Narrow scope
 * PowerShell 2 compatible
 * Line-break agnostic
-* Convenience properties with accurate data type
+* Convenience properties with relevant data type
 
 ### Fast
 
