@@ -31,15 +31,15 @@ namespace EdiTools.Tests
                 testData
                 ));
 
-            _testFiles = testFileList.ToArray();
+            _edi835testFiles = testFileList.ToArray();
         }
         [OneTimeTearDown]
         public void Teardown()
         {
-            if (_testFiles[0] != null)
+            if (_edi835testFiles[0] != null)
             {
                 // all test files are in the same tmp directory
-                System.IO.Directory.Delete(_testFiles[0].DirectoryName);
+                System.IO.Directory.Delete(_edi835testFiles[0].DirectoryName);
             }
         }
         private string GetTestData()
@@ -187,7 +187,7 @@ IEA*1*000000001~";
         [Test]
         public void TestInterchange()
         {
-            foreach (var f in _testFiles)
+            foreach (var f in _edi835testFiles)
             {
                 Assert.IsNotNull(f);
                 Assert.AreEqual(f.Interchange.SenderId, "TheSender");
@@ -224,7 +224,7 @@ IEA*1*000000001~";
         [Test]
         public void TestFunctionalGroup()
         {
-            foreach (var f in _testFiles)
+            foreach (var f in _edi835testFiles)
             {
                 foreach(var g in f.FunctionalGroups)
                 {
@@ -250,7 +250,7 @@ IEA*1*000000001~";
         [Test]
         public void TestTransactionSet()
         {
-            foreach (var f in _testFiles)
+            foreach (var f in _edi835testFiles)
             {
                 foreach (var g in f.FunctionalGroups)
                 {
@@ -261,7 +261,6 @@ IEA*1*000000001~";
                     {
                         // these elements are the same in each transaction set in the test file
                         Assert.AreEqual(set.ST.ST01, "835");
-                        Assert.AreEqual(set.ST.ST03, "005010X221A1");
 
                         Assert.AreEqual(set.SE.SE01, "31");
 
@@ -283,7 +282,7 @@ IEA*1*000000001~";
         [Test]
         public void TestEdi835()
         {
-            foreach (var f in _testFiles)
+            foreach (var f in _edi835testFiles)
             {
                 foreach (var g in f.FunctionalGroups)
                 {
@@ -308,7 +307,7 @@ IEA*1*000000001~";
             }
         }
         #region private
-        private EdiTools.EdiFile[] _testFiles;
+        private EdiTools.EdiFile[] _edi835testFiles;
         #endregion
     }
 }
