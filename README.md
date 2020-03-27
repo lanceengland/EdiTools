@@ -11,6 +11,7 @@ When creating EdiTools, I had specific design goals in mind:
 * Narrow scope
 * PowerShell 2 compatible
 * Line-break agnostic
+* Convenience properties with accurate data type
 
 ### Fast
 
@@ -33,6 +34,12 @@ This is a personal constraint, but as of now, I needed the module to be PowerShe
 ### Line-break Agnostic
 
 The parsing process needed to be agnostic to "wrapped" (single line), or "unwrapped" (CR/LF, or LF-only) files
+
+### Convenience properties with accurate data type
+
+Certain segment/element values from the EDI file are promoted for convenience. These convenience properties are converted to data types designated in the specification.
+
+For example, the Interchange segments ISA09 and ISA10 are interchange date and time, respectively. These properties are combined into property Interchange.Date of type System.DateTime.
 
 ## Installation
 

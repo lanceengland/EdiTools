@@ -3,12 +3,15 @@ using System;
 
 namespace EdiTools
 {
+    /// <summary>
+    /// Segment is a building block data structure.
+    /// </summary>
     public abstract class Segment
     {
         private EdiTools.Index _index;
         internal EdiTools.Index Index { get { return _index; } set { _index = value; } }
     }
-     public class ISA : Segment
+    public class ISA : Segment
     {
         #region private
         private string _isa01;
@@ -137,8 +140,10 @@ namespace EdiTools
     {
         private string _st01;
         private string _st02;
+        private string _st03;
         public string ST01 { get { return _st01; } internal set { _st01 = value; } }
         public string ST02 { get { return _st02; } internal set { _st02 = value; } }
+        public string ST03 { get { return _st03; } internal set { _st03 = value; } }
     }
     public class SE : Segment
     {
@@ -177,7 +182,7 @@ namespace EdiTools
         private EdiTools.Index[] _fileindexes;
 
         private EdiTools.Interchange _interchange;
-        private EdiTools.FunctionalGroup[] _functionalgroups;        
+        private EdiTools.FunctionalGroup[] _functionalgroups;
         #endregion
         public EdiFile(string filePath)
         {
@@ -219,7 +224,7 @@ namespace EdiTools
 
                 // to parse functional groups
                 System.Collections.Generic.List<EdiTools.FunctionalGroup> functionalGroups = new System.Collections.Generic.List<FunctionalGroup>();
-                
+
                 EdiTools.Index gs = new EdiTools.Index();
                 EdiTools.Index ge = new EdiTools.Index();
 
@@ -227,15 +232,15 @@ namespace EdiTools
                 {
                     // interchange
                     if (idx.Name == "ISA") { isa = idx; }
-                    if (idx.Name == "IEA") 
-                    { 
+                    if (idx.Name == "IEA")
+                    {
                         iea = idx;
                         _interchange = new EdiTools.Interchange(this, isa, iea);
                     }
 
                     // functional group
-                    if (idx.Name == "GS") 
-                    { 
+                    if (idx.Name == "GS")
+                    {
                         gs = idx;
                     }
 
@@ -382,7 +387,6 @@ namespace EdiTools
         #endregion
         public EdiTools.GS GS { get { return _gs; } }
         public EdiTools.GE GE { get { return _ge; } }
-
         public System.DateTime GroupDate
         {
             get
@@ -394,11 +398,11 @@ namespace EdiTools
                 return _groupdate;
             }
         }
-        internal EdiTools.EdiFile EdiFile { get { return _parent; } }
+        public EdiTools.EdiFile EdiFile { get { return _parent; } }
         public EdiTools.TransactionSet[] GetTransactionSets()
         {
             System.Collections.Generic.List<EdiTools.TransactionSet> transactionSets = new System.Collections.Generic.List<EdiTools.TransactionSet>();
-            foreach(EdiTools.Index[] idx in _transetIndexes)
+            foreach (EdiTools.Index[] idx in _transetIndexes)
             {
                 transactionSets.Add(new EdiTools.TransactionSet(this, idx));
             }
@@ -436,6 +440,7 @@ namespace EdiTools
             _st = new EdiTools.ST();
             _st.ST01 = elements[1];
             _st.ST02 = elements[2];
+            _st.ST03 = elements[3];
             _st.Index = st;
 
             elements = _parent.EdiFile.GetRawText().Substring(se.Start, se.Length).Split(new char[] { parent.EdiFile.Delimiter.Element }, System.StringSplitOptions.None);
@@ -454,14 +459,12 @@ namespace EdiTools
         public EdiTools.SE SE { get { return _se; } }
         public string ID { get { return _st.ST01; } }
         public string ControlNumber { get { return _st.ST02; } }
-
         internal EdiTools.Index[] Indexes { get { return _indexes; } }
         public EdiTools.FunctionalGroup FunctionalGroup { get { return _parent; } }
         public string GetRawText()
         {
             return _parent.EdiFile.GetRawText().Substring(_st.Index.Start, _se.Index.Start + _se.Index.Length - _st.Index.Start + 1 + _parent.EdiFile.Delimiter.Line.Length);
         }
-        //public string Body { get { return this.GetRawText(); } }
         public string Unwrap()
         {
             if (_parent.EdiFile.IsUnwrapped)
@@ -474,8 +477,8 @@ namespace EdiTools
             }
         }
     }
-    public class Edi835 
-    { 
+    public class Edi835
+    {
         public Edi835(EdiTools.TransactionSet transactionSet)
         {
             if (transactionSet.ID != "835") { throw new ArgumentException("Expected an EDI transaction set of type 835."); }
@@ -488,7 +491,7 @@ namespace EdiTools
                 if (idx.Name == "BPR")
                 {
                     elements = transactionSet.FunctionalGroup.EdiFile.GetRawText().Substring(idx.Start, idx.Length).Split(transactionSet.FunctionalGroup.EdiFile.Delimiter.Element);
-                    
+
                     System.Decimal.TryParse(elements[2], out _totalActualProviderPaymentAmount);
                     _senderBankAccountNumber = elements[9];
                 }
@@ -527,8 +530,8 @@ namespace EdiTools
         public TransactionSet TransactionSet { get { return _transactionSet; } }
         public string GetRawText() { return _transactionSet.GetRawText(); }
         public string Body
-        { 
-            get 
+        {
+            get
             {
                 if (_transactionSet.FunctionalGroup.EdiFile.IsUnwrapped)
                 {
@@ -538,13 +541,12 @@ namespace EdiTools
                 {
                     return Unwrap();
                 }
-            } 
+            }
         }
         public string Unwrap() { return _transactionSet.Unwrap(); }
     }
 }
 "@
-
 function Get-EdiFile {
 <#
     .SYNOPSIS
