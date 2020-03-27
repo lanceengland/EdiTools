@@ -25,7 +25,7 @@ Each cmdlet exposes more properties on the output object. In addition, the first
 
 ### Narrow scope
 
-This is not a full-fledged EDI parser. It has one purpose, search, filter, and display EDI file contents. As such, only frequently needed properties are exposed.
+This is not a full-fledged EDI parser. The primary focus was an easy way to search, filter, and display EDI file contents. As such, only certain values of the segments and elements are promoted as properties.
 
 ### PowerShell 2 compatible
 
