@@ -212,7 +212,7 @@ namespace EdiTools
                 _filename = System.IO.Path.GetFileName(filePath);
                 _directoryname = System.IO.Path.GetDirectoryName(filePath);
 
-                // start position and length for every segment/line in the file. The foundation for the parsing the file
+                // start position and length for every segment/line in the file. The foundation for parsing the file
                 _fileindexes = this.GetIndexes();
 
                 // to parse interchange
@@ -310,6 +310,17 @@ namespace EdiTools
             */
         }
         public string GetRawText() { return _rawtext; }
+        public string Unwrap()
+        {
+            if (_isunwrapped)
+            {
+                return this.GetRawText();
+            }
+            else
+            {
+                return this.GetRawText().Replace(_delimiter.Segment.ToString(), _delimiter.Segment.ToString() + System.Environment.NewLine);
+            }
+        }
         #endregion
 
         #region properties
