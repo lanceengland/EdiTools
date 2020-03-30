@@ -497,7 +497,7 @@ namespace EdiTools
     }
     public abstract class EdiImplementationBase
     {
-        protected EdiImplementationBase(EdiTools.TransactionSet transactionSet)
+        public EdiImplementationBase(EdiTools.TransactionSet transactionSet)
         {
             _transactionSet = transactionSet;
         }
