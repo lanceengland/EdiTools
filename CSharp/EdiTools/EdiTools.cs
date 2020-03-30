@@ -241,6 +241,7 @@ namespace EdiTools
                         gs = idx;
                     }
 
+                    // GE is the end of a functional group, so add to the functional group collection
                     if (idx.Name == "GE")
                     {
                         ge = idx;
@@ -357,8 +358,10 @@ namespace EdiTools
             _ge.GE02 = elements[2];
             _ge.Index = ge;
 
-            // st/se indexes Note: This is optimized to work with one functional group. It will function with more than one, 
-            // but will scan the entire file indexes x # of groups. For now, I decided to not make a identical copy of indexes for the most common case
+            // st/se indexes are for getting the start and end of each transaction set in the group
+            System.Collections.Generic.List<EdiTools.Index> _stIndexes = new System.Collections.Generic.List<Index>();
+            System.Collections.Generic.List<EdiTools.Index> _seIndexes = new System.Collections.Generic.List<Index>();
+
             System.Collections.Generic.List<EdiTools.Index> segments = new System.Collections.Generic.List<Index>();
             foreach (EdiTools.Index idx in _parent.GetIndexes())
             {
@@ -371,13 +374,13 @@ namespace EdiTools
 
                 if (idx.Name == "ST")
                 {
-                    stIndexes.Add(idx);
+                    _stIndexes.Add(idx);
                 }
 
                 if (idx.Name == "SE")
                 {
-                    seIndexes.Add(idx);
-                    _transetIndexes.Add(segments.ToArray());
+                    _seIndexes.Add(idx);
+                    _transactionSetIndexes.Add(segments.ToArray());
                     segments.Clear();
                 }
             }
@@ -387,11 +390,7 @@ namespace EdiTools
         private EdiTools.GS _gs = new EdiTools.GS();
         private EdiTools.GE _ge = new EdiTools.GE();
         private System.DateTime _groupdate = System.DateTime.MinValue;
-
-        private System.Collections.Generic.List<EdiTools.Index[]> _transetIndexes = new System.Collections.Generic.List<Index[]>();
-
-        private System.Collections.Generic.List<EdiTools.Index> stIndexes = new System.Collections.Generic.List<Index>();
-        private System.Collections.Generic.List<EdiTools.Index> seIndexes = new System.Collections.Generic.List<Index>();
+        private System.Collections.Generic.List<EdiTools.Index[]> _transactionSetIndexes = new System.Collections.Generic.List<Index[]>();
         #endregion
         public EdiTools.GS GS { get { return _gs; } }
         public EdiTools.GE GE { get { return _ge; } }
@@ -410,7 +409,7 @@ namespace EdiTools
         public EdiTools.TransactionSet[] GetTransactionSets()
         {
             System.Collections.Generic.List<EdiTools.TransactionSet> transactionSets = new System.Collections.Generic.List<EdiTools.TransactionSet>();
-            foreach (EdiTools.Index[] idx in _transetIndexes)
+            foreach (EdiTools.Index[] idx in _transactionSetIndexes)
             {
                 transactionSets.Add(new EdiTools.TransactionSet(this, idx));
             }
@@ -474,25 +473,27 @@ namespace EdiTools
             if (transactionSet.ID != "835") { throw new ArgumentException("Expected an EDI transaction set of type 835."); }
 
             _transactionSet = transactionSet;
+            char elementDelimiter = transactionSet.FunctionalGroup.EdiFile.Delimiter.Element;
+            string rawText = transactionSet.FunctionalGroup.EdiFile.GetRawText();
 
             foreach (EdiTools.Index idx in transactionSet.Indexes)
             {
                 string[] elements;
                 if (idx.Name == "BPR")
                 {
-                    elements = transactionSet.FunctionalGroup.EdiFile.GetRawText().Substring(idx.Start, idx.Length).Split(transactionSet.FunctionalGroup.EdiFile.Delimiter.Element);
+                    elements = rawText.Substring(idx.Start, idx.Length).Split(elementDelimiter);
 
                     System.Decimal.TryParse(elements[2], out _totalActualProviderPaymentAmount);
                     _senderBankAccountNumber = elements[9];
                 }
                 if (idx.Name == "TRN")
                 {
-                    elements = transactionSet.FunctionalGroup.EdiFile.GetRawText().Substring(idx.Start, idx.Length).Split(transactionSet.FunctionalGroup.EdiFile.Delimiter.Element);
+                    elements = rawText.Substring(idx.Start, idx.Length).Split(elementDelimiter);
                     _checkorEFTTraceNumber = elements[2];
                 }
                 if (idx.Name == "N1")
                 {
-                    elements = transactionSet.FunctionalGroup.EdiFile.GetRawText().Substring(idx.Start, idx.Length).Split(transactionSet.FunctionalGroup.EdiFile.Delimiter.Element);
+                    elements = rawText.Substring(idx.Start, idx.Length).Split(elementDelimiter);
                     if (elements[1] == "PR")
                     {
                         _payer = elements[2];
@@ -507,18 +508,24 @@ namespace EdiTools
         }
 
         EdiTools.TransactionSet _transactionSet;
+        #region private
         private string _payer;
         private string _payee;
         private string _senderBankAccountNumber;
         private string _checkorEFTTraceNumber;
         private decimal _totalActualProviderPaymentAmount;
+        #endregion
+
+        #region properties
         public string Payer { get { return _payer; } }
         public string Payee { get { return _payee; } }
         public string SenderBankAccountNumber { get { return _senderBankAccountNumber; } }
         public string CheckorEFTTraceNumber { get { return _checkorEFTTraceNumber; } }
         public decimal TotalActualProviderPaymentAmount { get { return _totalActualProviderPaymentAmount; } }
         public TransactionSet TransactionSet { get { return _transactionSet; } }
-        public string GetRawText() { return _transactionSet.GetRawText(); }
+        #endregion
+
+        #region methods
         public string Body
         {
             get
@@ -533,6 +540,8 @@ namespace EdiTools
                 }
             }
         }
-        public string Unwrap() { return _transactionSet.Unwrap(); }
+        public string GetRawText() { return _transactionSet.GetRawText(); }
+        public string Unwrap() { return _transactionSet.Unwrap(); } 
+        #endregion
     }
 }
