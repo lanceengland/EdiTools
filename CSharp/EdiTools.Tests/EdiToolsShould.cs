@@ -36,10 +36,9 @@ namespace EdiTools.Tests
         [OneTimeTearDown]
         public void Teardown()
         {
-            if (_edi835testFiles[0] != null)
+            foreach(var f in _edi835testFiles)
             {
-                // all test files are in the same tmp directory
-                System.IO.Directory.Delete(_edi835testFiles[0].DirectoryName);
+                System.IO.File.Delete(f.FullName);
             }
         }
         private string GetTestData()
@@ -295,6 +294,7 @@ IEA*1*000000001~";
                     Assert.AreEqual(edi835.Payer, "BCBS DISNEY");
                     Assert.AreEqual(edi835.Payee, "UCLA MEDICAL CENTER");
                     Assert.AreEqual(edi835.TotalActualProviderPaymentAmount, 391.05m);
+                    Assert.AreEqual(edi835.TransactionSet.SE.TransactionSegmentCount, edi835.GetSegments().Length);
 
                     // set 2
                     edi835 = new EdiTools.Edi835(sets[1]);
@@ -303,6 +303,7 @@ IEA*1*000000001~";
                     Assert.AreEqual(edi835.Payer, "BCBS DISNEY");
                     Assert.AreEqual(edi835.Payee, "UCLA MEDICAL CENTER");
                     Assert.AreEqual(edi835.TotalActualProviderPaymentAmount, 391.05m);
+                    Assert.AreEqual(edi835.TransactionSet.SE.TransactionSegmentCount, edi835.GetSegments().Length);
                 }
             }
         }
