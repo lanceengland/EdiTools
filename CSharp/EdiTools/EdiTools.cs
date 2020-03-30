@@ -10,7 +10,7 @@ namespace EdiTools
         private EdiTools.Index _index;
         internal EdiTools.Index Index { get { return _index; } set { _index = value; } }
     }
-    public class ISA : Segment
+    public sealed class ISA : Segment
     {
         #region private
         private string _isa01;
@@ -48,7 +48,7 @@ namespace EdiTools
         public string ISA15 { get { return _isa15; } set { _isa15 = value; } }
         public string ISA16 { get { return _isa16; } set { _isa16 = value; } }
     }
-    public class IEA : Segment
+    public sealed class IEA : Segment
     {
         #region private
         private string _iea01;
@@ -57,14 +57,14 @@ namespace EdiTools
         public string IEA01 { get { return _iea01; } set { _iea01 = value; } }
         public string IEA02 { get { return _iea02; } set { _iea02 = value; } }
     }
-    public class Interchange
+    public sealed class Interchange
     {
         private EdiTools.ISA _isa = new EdiTools.ISA();
         private EdiTools.IEA _iea = new EdiTools.IEA();
         private System.DateTime _interchangedate = System.DateTime.MinValue;
         internal Interchange(EdiTools.EdiFile parent, EdiTools.Index isa, EdiTools.Index iea)
         {
-            string[] elements = parent.GetRawText().Substring(isa.Start, isa.Length).Split(parent.Delimiter.Element);
+            string[] elements = isa.GetElements();
             _isa.ISA01 = elements[1];
             _isa.ISA02 = elements[2];
             _isa.ISA03 = elements[3];
@@ -83,7 +83,7 @@ namespace EdiTools
             _isa.ISA16 = elements[16];
             _isa.Index = isa;
 
-            elements = parent.GetRawText().Substring(iea.Start, iea.Length).Split(new char[] { parent.Delimiter.Element }, System.StringSplitOptions.None);
+            elements = iea.GetElements();
             _iea.IEA01 = elements[1];
             _iea.IEA02 = elements[2];
             _iea.Index = iea;
@@ -105,7 +105,7 @@ namespace EdiTools
         }
         public string ControlNumber { get { return _isa.ISA13; } }
     }
-    public class GS : Segment
+    public sealed class GS : Segment
     {
         #region private
         private string _gs01;
@@ -126,7 +126,7 @@ namespace EdiTools
         public string GS07 { get { return _gs07; } set { _gs07 = value; } }
         public string GS08 { get { return _gs08; } set { _gs08 = value; } }
     }
-    public class GE : Segment
+    public sealed class GE : Segment
     {
         #region private
         private string _ge01;
@@ -135,21 +135,36 @@ namespace EdiTools
         public string GE01 { get { return _ge01; } internal set { _ge01 = value; } }
         public string GE02 { get { return _ge02; } internal set { _ge02 = value; } }
     }
-    public class ST : Segment
+    public sealed class ST : Segment
     {
         private string _st01;
         private string _st02;
         public string ST01 { get { return _st01; } internal set { _st01 = value; } }
         public string ST02 { get { return _st02; } internal set { _st02 = value; } }
     }
-    public class SE : Segment
+    public sealed class SE : Segment
     {
         private string _se01;
         private string _se02;
-        public string SE01 { get { return _se01; } internal set { _se01 = value; } }
+        private int _transactionSegmentCount;
+        public string SE01 
+        { 
+            get 
+            { 
+                return _se01; 
+            } 
+            internal set 
+            { 
+                _se01 = value;
+                int i = 0;
+                System.Int32.TryParse(value, out i);
+                _transactionSegmentCount = i;
+            } 
+        }
         public string SE02 { get { return _se02; } internal set { _se02 = value; } }
+        public int TransactionSegmentCount { get { return _transactionSegmentCount; } }
     }
-    public class Delimiter
+    public sealed class Delimiter
     {
         #region private
         private char _element;
@@ -162,13 +177,37 @@ namespace EdiTools
         public char Segment { get { return _segment; } set { _segment = value; } }
         public string Line { get { return _line; } set { _line = value; } }
     }
-    public struct Index
+    public sealed class Index
     {
-        public string Name;
-        public int Start;
-        public int Length;
+        internal Index(EdiTools.EdiFile ediFile)
+        {
+            _ediFile = ediFile;
+        }
+        #region properties
+        public string Name { get { return _name; } set { _name = value; } }
+        public int Start { get { return _start; } set { _start = value; } }
+        public int Length { get { return _length; } set { _length = value; } }
+        #endregion
+
+        #region methods
+        public string GetLine()
+        {
+            return _ediFile.GetRawText().Substring(_start, _length);
+        }
+        public string[] GetElements()
+        {
+            return GetLine().Split(new char[] { _ediFile.Delimiter.Element }, StringSplitOptions.None);
+        }
+        #endregion
+
+        #region private
+        private string _name;
+        private int _start;
+        private int _length;
+        public EdiTools.EdiFile _ediFile;
+        #endregion
     }
-    public class EdiFile
+    public sealed class EdiFile
     {
         #region private
         private string _filename;
@@ -212,18 +251,18 @@ namespace EdiTools
                 _filename = System.IO.Path.GetFileName(filePath);
                 _directoryname = System.IO.Path.GetDirectoryName(filePath);
 
-                // start position and length for every segment/line in the file. The foundation for the parsing the file
+                // start position and length for every segment/line in the file. The foundation for parsing the file
                 _fileindexes = this.GetIndexes();
 
                 // to parse interchange
-                EdiTools.Index isa = new EdiTools.Index();
-                EdiTools.Index iea = new EdiTools.Index();
+                EdiTools.Index isa = new EdiTools.Index(this);
+                EdiTools.Index iea = new EdiTools.Index(this);
 
                 // to parse functional groups
                 System.Collections.Generic.List<EdiTools.FunctionalGroup> functionalGroups = new System.Collections.Generic.List<FunctionalGroup>();
 
-                EdiTools.Index gs = new EdiTools.Index();
-                EdiTools.Index ge = new EdiTools.Index();
+                EdiTools.Index gs = new EdiTools.Index(this);
+                EdiTools.Index ge = new EdiTools.Index(this);
 
                 foreach (EdiTools.Index idx in _fileindexes)
                 {
@@ -241,6 +280,7 @@ namespace EdiTools
                         gs = idx;
                     }
 
+                    // GE is the end of a functional group, so add to the functional group collection
                     if (idx.Name == "GE")
                     {
                         ge = idx;
@@ -261,7 +301,7 @@ namespace EdiTools
         internal Index[] GetIndexes()
         {
             System.Collections.Generic.List<EdiTools.Index> indexes = new System.Collections.Generic.List<EdiTools.Index>();
-            EdiTools.Index idx = new EdiTools.Index();
+            EdiTools.Index idx = new EdiTools.Index(this);
             System.Text.StringBuilder sb = new System.Text.StringBuilder();
             bool doRead = true;
             for (int i = 0; i < _rawtext.Length; i++)
@@ -284,32 +324,25 @@ namespace EdiTools
 
                     // reset for next loop
                     sb = new System.Text.StringBuilder();
-                    idx = new EdiTools.Index();
+                    idx = new EdiTools.Index(this);
                     idx.Start = i + 1 + _delimiter.Line.Length; /* The + 1 is to move the index past the segment delimiter position */
                 }
             }
 
             return indexes.ToArray();
-
-            /*
-            System.Collections.Generic.List<EdiTools.SegmentIndex> list = new System.Collections.Generic.List<SegmentIndex>();
-            EdiTools.SegmentIndex lineIndex = new EdiTools.SegmentIndex();
-            for (int i = 0; i < _rawtext.Length; i++)
-            {
-                if (_rawtext[i] == _delimeters.Segment)
-                {
-                    lineIndex.Length = i - lineIndex.Start;
-                    list.Add(lineIndex);
-
-                    // reset for next loop
-                    lineIndex = new EdiTools.SegmentIndex();
-                    lineIndex.Start = i + 1 + _delimeters.Line.Length;
-                }
-            }
-            return list.ToArray();
-            */
         }
         public string GetRawText() { return _rawtext; }
+        public string Unwrap()
+        {
+            if (_isunwrapped)
+            {
+                return this.GetRawText();
+            }
+            else
+            {
+                return this.GetRawText().Replace(_delimiter.Segment.ToString(), _delimiter.Segment.ToString() + System.Environment.NewLine);
+            }
+        }
         #endregion
 
         #region properties
@@ -322,14 +355,14 @@ namespace EdiTools
         public EdiTools.FunctionalGroup[] FunctionalGroups { get { return _functionalgroups; } }
         #endregion
     }
-    public class FunctionalGroup
+    public sealed class FunctionalGroup
     {
         internal FunctionalGroup(EdiTools.EdiFile parent, EdiTools.Index gs, EdiTools.Index ge)
         {
             _parent = parent;
 
             // gs
-            string[] elements = parent.GetRawText().Substring(gs.Start, gs.Length).Split(new char[] { parent.Delimiter.Element, parent.Delimiter.Segment }, System.StringSplitOptions.None);
+            string[] elements = gs.GetElements();
             _gs.GS01 = elements[1];
             _gs.GS02 = elements[2];
             _gs.GS03 = elements[3];
@@ -341,13 +374,15 @@ namespace EdiTools
             _gs.Index = gs;
 
             // ge
-            elements = parent.GetRawText().Substring(ge.Start, ge.Length).Split(new char[] { parent.Delimiter.Element }, System.StringSplitOptions.None);
+            elements = ge.GetElements();
             _ge.GE01 = elements[1];
             _ge.GE02 = elements[2];
             _ge.Index = ge;
 
-            // st/se indexes Note: This is optimized to work with one functional group. It will function with more than one, 
-            // but will scan the entire file indexes x # of groups. For now, I decided to not make a identical copy of indexes for the most common case
+            // st/se indexes are for getting the start and end of each transaction set in the group
+            System.Collections.Generic.List<EdiTools.Index> _stIndexes = new System.Collections.Generic.List<Index>();
+            System.Collections.Generic.List<EdiTools.Index> _seIndexes = new System.Collections.Generic.List<Index>();
+
             System.Collections.Generic.List<EdiTools.Index> segments = new System.Collections.Generic.List<Index>();
             foreach (EdiTools.Index idx in _parent.GetIndexes())
             {
@@ -360,13 +395,13 @@ namespace EdiTools
 
                 if (idx.Name == "ST")
                 {
-                    stIndexes.Add(idx);
+                    _stIndexes.Add(idx);
                 }
 
                 if (idx.Name == "SE")
                 {
-                    seIndexes.Add(idx);
-                    _transetIndexes.Add(segments.ToArray());
+                    _seIndexes.Add(idx);
+                    _transactionSetIndexes.Add(segments.ToArray());
                     segments.Clear();
                 }
             }
@@ -376,11 +411,7 @@ namespace EdiTools
         private EdiTools.GS _gs = new EdiTools.GS();
         private EdiTools.GE _ge = new EdiTools.GE();
         private System.DateTime _groupdate = System.DateTime.MinValue;
-
-        private System.Collections.Generic.List<EdiTools.Index[]> _transetIndexes = new System.Collections.Generic.List<Index[]>();
-
-        private System.Collections.Generic.List<EdiTools.Index> stIndexes = new System.Collections.Generic.List<Index>();
-        private System.Collections.Generic.List<EdiTools.Index> seIndexes = new System.Collections.Generic.List<Index>();
+        private System.Collections.Generic.List<EdiTools.Index[]> _transactionSetIndexes = new System.Collections.Generic.List<Index[]>();
         #endregion
         public EdiTools.GS GS { get { return _gs; } }
         public EdiTools.GE GE { get { return _ge; } }
@@ -399,14 +430,14 @@ namespace EdiTools
         public EdiTools.TransactionSet[] GetTransactionSets()
         {
             System.Collections.Generic.List<EdiTools.TransactionSet> transactionSets = new System.Collections.Generic.List<EdiTools.TransactionSet>();
-            foreach (EdiTools.Index[] idx in _transetIndexes)
+            foreach (EdiTools.Index[] idx in _transactionSetIndexes)
             {
                 transactionSets.Add(new EdiTools.TransactionSet(this, idx));
             }
             return transactionSets.ToArray();
         }
     }
-    public class TransactionSet
+    public sealed class TransactionSet
     {
         public TransactionSet(EdiTools.FunctionalGroup parent, EdiTools.Index[] indexes)
         {
@@ -416,30 +447,36 @@ namespace EdiTools
             EdiTools.Index st = indexes[0];
             EdiTools.Index se = indexes[indexes.Length - 1];
 
-            string[] elements = _parent.EdiFile.GetRawText().Substring(st.Start, st.Length).Split(new char[] { parent.EdiFile.Delimiter.Element }, System.StringSplitOptions.None);
+            string[] elements = st.GetElements();
             _st = new EdiTools.ST();
             _st.ST01 = elements[1];
             _st.ST02 = elements[2];
             _st.Index = st;
 
-            elements = _parent.EdiFile.GetRawText().Substring(se.Start, se.Length).Split(new char[] { parent.EdiFile.Delimiter.Element }, System.StringSplitOptions.None);
+            elements = se.GetElements();
             _se = new EdiTools.SE();
             _se.SE01 = elements[1];
             _se.SE02 = elements[2];
             _se.Index = se;
         }
 
+        #region private
         private EdiTools.FunctionalGroup _parent;
         private EdiTools.ST _st;
         private EdiTools.SE _se;
-
         private EdiTools.Index[] _indexes;
+        #endregion
+
+        #region properties
         public EdiTools.ST ST { get { return _st; } }
         public EdiTools.SE SE { get { return _se; } }
         public string ID { get { return _st.ST01; } }
         public string ControlNumber { get { return _st.ST02; } }
         internal EdiTools.Index[] Indexes { get { return _indexes; } }
         public EdiTools.FunctionalGroup FunctionalGroup { get { return _parent; } }
+        #endregion
+
+        #region methods
         public string GetRawText()
         {
             return _parent.EdiFile.GetRawText().Substring(_st.Index.Start, _se.Index.Start + _se.Index.Length - _st.Index.Start + 1 + _parent.EdiFile.Delimiter.Line.Length);
@@ -455,59 +492,16 @@ namespace EdiTools
                 return this.GetRawText().Replace(_parent.EdiFile.Delimiter.Segment.ToString(), _parent.EdiFile.Delimiter.Segment.ToString() + System.Environment.NewLine);
             }
         }
+        #endregion
     }
-    public class Edi835
+    public abstract class EdiImplementationBase
     {
-        public Edi835(EdiTools.TransactionSet transactionSet)
+        protected EdiImplementationBase(EdiTools.TransactionSet transactionSet)
         {
-            if (transactionSet.ID != "835") { throw new ArgumentException("Expected an EDI transaction set of type 835."); }
-
             _transactionSet = transactionSet;
-
-            foreach (EdiTools.Index idx in transactionSet.Indexes)
-            {
-                string[] elements;
-                if (idx.Name == "BPR")
-                {
-                    elements = transactionSet.FunctionalGroup.EdiFile.GetRawText().Substring(idx.Start, idx.Length).Split(transactionSet.FunctionalGroup.EdiFile.Delimiter.Element);
-
-                    System.Decimal.TryParse(elements[2], out _totalActualProviderPaymentAmount);
-                    _senderBankAccountNumber = elements[9];
-                }
-                if (idx.Name == "TRN")
-                {
-                    elements = transactionSet.FunctionalGroup.EdiFile.GetRawText().Substring(idx.Start, idx.Length).Split(transactionSet.FunctionalGroup.EdiFile.Delimiter.Element);
-                    _checkorEFTTraceNumber = elements[2];
-                }
-                if (idx.Name == "N1")
-                {
-                    elements = transactionSet.FunctionalGroup.EdiFile.GetRawText().Substring(idx.Start, idx.Length).Split(transactionSet.FunctionalGroup.EdiFile.Delimiter.Element);
-                    if (elements[1] == "PR")
-                    {
-                        _payer = elements[2];
-                    }
-                    if (elements[1] == "PE")
-                    {
-                        _payee = elements[2];
-                        break;
-                    }
-                }
-            }
         }
 
-        EdiTools.TransactionSet _transactionSet;
-        private string _payer;
-        private string _payee;
-        private string _senderBankAccountNumber;
-        private string _checkorEFTTraceNumber;
-        private decimal _totalActualProviderPaymentAmount;
-        public string Payer { get { return _payer; } }
-        public string Payee { get { return _payee; } }
-        public string SenderBankAccountNumber { get { return _senderBankAccountNumber; } }
-        public string CheckorEFTTraceNumber { get { return _checkorEFTTraceNumber; } }
-        public decimal TotalActualProviderPaymentAmount { get { return _totalActualProviderPaymentAmount; } }
-        public TransactionSet TransactionSet { get { return _transactionSet; } }
-        public string GetRawText() { return _transactionSet.GetRawText(); }
+        #region properties
         public string Body
         {
             get
@@ -522,6 +516,81 @@ namespace EdiTools
                 }
             }
         }
+        #endregion
+
+        #region methods
+        public string GetRawText() { return _transactionSet.GetRawText(); }
         public string Unwrap() { return _transactionSet.Unwrap(); }
+        public string[][] GetSegments()
+        {
+            System.Collections.Generic.List<string[]> segments = new System.Collections.Generic.List<string[]>();
+            foreach (EdiTools.Index idx in _transactionSet.Indexes)
+            {
+                segments.Add(idx.GetElements());
+            }
+            return segments.ToArray();
+        }
+        #endregion
+
+        #region private
+        private EdiTools.TransactionSet _transactionSet;
+        #endregion
+    }
+    public sealed class Edi835 :EdiImplementationBase
+    {
+        public Edi835(EdiTools.TransactionSet transactionSet) : base(transactionSet)
+        {
+            if (transactionSet.ID != "835") { throw new ArgumentException("Expected an EDI transaction set of type 835."); }
+            _transactionSet = transactionSet;
+
+            // get convenience 835 properties
+            foreach (EdiTools.Index idx in transactionSet.Indexes)
+            {
+                string[] elements;
+                if (idx.Name == "BPR")
+                {
+                    elements = idx.GetElements();
+
+                    System.Decimal.TryParse(elements[2], out _totalActualProviderPaymentAmount);
+                    _senderBankAccountNumber = elements[9];
+                }
+                if (idx.Name == "TRN")
+                {
+                    elements = idx.GetElements();
+                    _checkorEFTTraceNumber = elements[2];
+                }
+                if (idx.Name == "N1")
+                {
+                    elements = idx.GetElements();
+                    if (elements[1] == "PR")
+                    {
+                        _payer = elements[2];
+                    }
+                    if (elements[1] == "PE")
+                    {
+                        _payee = elements[2];
+                        break;
+                    }
+                }
+            }
+        }
+
+        #region private
+        private EdiTools.TransactionSet _transactionSet;
+        private string _payer;
+        private string _payee;
+        private string _senderBankAccountNumber;
+        private string _checkorEFTTraceNumber;
+        private decimal _totalActualProviderPaymentAmount;
+        #endregion
+
+        #region properties
+        public string Payer { get { return _payer; } }
+        public string Payee { get { return _payee; } }
+        public string SenderBankAccountNumber { get { return _senderBankAccountNumber; } }
+        public string CheckorEFTTraceNumber { get { return _checkorEFTTraceNumber; } }
+        public decimal TotalActualProviderPaymentAmount { get { return _totalActualProviderPaymentAmount; } }
+        public TransactionSet TransactionSet { get { return _transactionSet; } }
+        #endregion
     }
 }
