@@ -29,7 +29,7 @@ This is not a full-fledged EDI parser. The primary focus was an easy way to sear
 
 ### PowerShell 2 compatible
 
-This is a personal constraint, but as of now, I needed the module to be PowerShell 2 compatible.
+This is a personal constraint, but as of now, I needed the module to be PowerShell 2 compatible. As such, the C\# code is written in a .net 2.0 style. I had to avoid some newer features else it would not run on PowerShell 2.0. Once I can move the minimum supported version to at least 3.0, then I can "modernize" the C\# a bit.
 
 ### Line-break agnostic
 
@@ -58,5 +58,6 @@ If you don't want to clone the repo, and just want to install the PowerShell mod
 Future development may include:
 
 * Additional EDI document type functions e.g. Get-Edi999, Get-Edi837, etc.
-* Implementing Pester tests (this is my next focus)
-* Create a .net Core and PowerShell Core version
+* Move up to at least PowerShell 3.0 (once my primary use case upgrade their client machines :))
+* Change Add-Type from inline C\# to referenced DLL
+* Create a .net Core and PowerShell Core version?
