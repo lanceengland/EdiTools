@@ -1,4 +1,7 @@
-﻿Describe 'EdiTools' {
+﻿$here = Split-Path -Parent $MyInvocation.MyCommand.Path
+Import-Module -Name "$here\EdiTools.psm1" 
+
+Describe 'EdiTools' {
 
     $testData = @"
 ISA*00*          *00*          *ZZ*TheSender      *ZZ*TheReceiver    *190101*1200*<*00501*000000001*0*P*:~
