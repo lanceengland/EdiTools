@@ -65,7 +65,7 @@ namespace EdiTools
         private System.DateTime _interchangedate = System.DateTime.MinValue;
         internal Interchange(EdiTools.EdiFile parent, EdiTools.Index isa, EdiTools.Index iea)
         {
-            string[] elements = isa.GetElements();
+            string[] elements = isa.Split();
             _isa.ISA01 = elements[1];
             _isa.ISA02 = elements[2];
             _isa.ISA03 = elements[3];
@@ -84,7 +84,7 @@ namespace EdiTools
             _isa.ISA16 = elements[16];
             _isa.Index = isa;
 
-            elements = iea.GetElements();
+            elements = iea.Split();
             _iea.IEA01 = elements[1];
             _iea.IEA02 = elements[2];
             _iea.Index = iea;
@@ -191,13 +191,16 @@ namespace EdiTools
         #endregion
 
         #region methods
-        public string GetLine()
+        public string Text
         {
-            return _ediFile.GetRawText().Substring(_start, _length);
+            get
+            {
+                return _ediFile.GetRawText().Substring(_start, _length);
+            }
         }
-        public string[] GetElements()
+        public string[] Split()
         {
-            return GetLine().Split(new char[] { _ediFile.Delimiter.Element }, StringSplitOptions.None);
+            return this.Text.Split(new char[] { _ediFile.Delimiter.Element }, StringSplitOptions.None);
         }
         #endregion
 
@@ -363,7 +366,7 @@ namespace EdiTools
             _parent = parent;
 
             // gs
-            string[] elements = gs.GetElements();
+            string[] elements = gs.Split();
             _gs.GS01 = elements[1];
             _gs.GS02 = elements[2];
             _gs.GS03 = elements[3];
@@ -375,7 +378,7 @@ namespace EdiTools
             _gs.Index = gs;
 
             // ge
-            elements = ge.GetElements();
+            elements = ge.Split();
             _ge.GE01 = elements[1];
             _ge.GE02 = elements[2];
             _ge.Index = ge;
@@ -448,13 +451,13 @@ namespace EdiTools
             EdiTools.Index st = indexes[0];
             EdiTools.Index se = indexes[indexes.Length - 1];
 
-            string[] elements = st.GetElements();
+            string[] elements = st.Split();
             _st = new EdiTools.ST();
             _st.ST01 = elements[1];
             _st.ST02 = elements[2];
             _st.Index = st;
 
-            elements = se.GetElements();
+            elements = se.Split();
             _se = new EdiTools.SE();
             _se.SE01 = elements[1];
             _se.SE02 = elements[2];
@@ -503,7 +506,7 @@ namespace EdiTools
         }
 
         #region properties
-        public string Body
+        public string Text
         {
             get
             {
@@ -536,19 +539,19 @@ namespace EdiTools
                 string[] elements;
                 if (idx.Name == "BPR")
                 {
-                    elements = idx.GetElements();
+                    elements = idx.Split();
 
                     System.Decimal.TryParse(elements[2], out _totalActualProviderPaymentAmount);
                     _senderBankAccountNumber = elements[9];
                 }
                 if (idx.Name == "TRN")
                 {
-                    elements = idx.GetElements();
+                    elements = idx.Split();
                     _checkorEFTTraceNumber = elements[2];
                 }
                 if (idx.Name == "N1")
                 {
-                    elements = idx.GetElements();
+                    elements = idx.Split();
                     if (elements[1] == "PR")
                     {
                         _payer = elements[2];
@@ -645,7 +648,7 @@ function Get-EdiFile {
 _______   _ _ ________         __     
 |  ____|  | (_)__   __|        | |    
 | |__   __| |_   | | ___   ___ | |___ 
-|  __| / _` | |  | |/ _ \ / _ \| / __|
+|  __| / _`` | |  | |/ _ \ / _ \| / __|
 | |___| (_| | |  | | (_) | (_) | \__ \
 |______\__,_|_|  |_|\___/ \___/|_|___/
 
