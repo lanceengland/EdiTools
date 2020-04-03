@@ -204,7 +204,7 @@ namespace EdiTools
         private string _name;
         private int _start;
         private int _length;
-        public EdiTools.EdiFile _ediFile;
+        private EdiTools.EdiFile _ediFile;
         #endregion
     }
     public sealed class EdiFile
@@ -472,7 +472,7 @@ namespace EdiTools
         public EdiTools.SE SE { get { return _se; } }
         public string ID { get { return _st.ST01; } }
         public string ControlNumber { get { return _st.ST02; } }
-        internal EdiTools.Index[] Indexes { get { return _indexes; } }
+        public EdiTools.Index[] Indexes { get { return _indexes; } }
         public EdiTools.FunctionalGroup FunctionalGroup { get { return _parent; } }
         #endregion
 
@@ -512,28 +512,14 @@ namespace EdiTools
                 }
                 else
                 {
-                    return Unwrap();
+                    return _transactionSet.Unwrap();
                 }
             }
         }
         #endregion
 
-        #region methods
-        public string GetRawText() { return _transactionSet.GetRawText(); }
-        public string Unwrap() { return _transactionSet.Unwrap(); }
-        public string[][] GetSegments()
-        {
-            System.Collections.Generic.List<string[]> segments = new System.Collections.Generic.List<string[]>();
-            foreach (EdiTools.Index idx in _transactionSet.Indexes)
-            {
-                segments.Add(idx.GetElements());
-            }
-            return segments.ToArray();
-        }
-        #endregion
-
         #region private
-        private EdiTools.TransactionSet _transactionSet;
+        protected EdiTools.TransactionSet _transactionSet;
         #endregion
     }
     public sealed class Edi835 :EdiImplementationBase
@@ -576,7 +562,6 @@ namespace EdiTools
         }
 
         #region private
-        private EdiTools.TransactionSet _transactionSet;
         private string _payer;
         private string _payee;
         private string _senderBankAccountNumber;
