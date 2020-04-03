@@ -294,7 +294,7 @@ IEA*1*000000001~";
                     Assert.AreEqual(edi835.Payer, "BCBS DISNEY");
                     Assert.AreEqual(edi835.Payee, "UCLA MEDICAL CENTER");
                     Assert.AreEqual(edi835.TotalActualProviderPaymentAmount, 391.05m);
-                    Assert.AreEqual(edi835.TransactionSet.SE.TransactionSegmentCount, edi835.GetSegments().Length);
+                    Assert.AreEqual(edi835.TransactionSet.SE.TransactionSegmentCount, edi835.TransactionSet.Indexes.Length);
 
                     // set 2
                     edi835 = new EdiTools.Edi835(sets[1]);
@@ -303,7 +303,7 @@ IEA*1*000000001~";
                     Assert.AreEqual(edi835.Payer, "BCBS DISNEY");
                     Assert.AreEqual(edi835.Payee, "UCLA MEDICAL CENTER");
                     Assert.AreEqual(edi835.TotalActualProviderPaymentAmount, 391.05m);
-                    Assert.AreEqual(edi835.TransactionSet.SE.TransactionSegmentCount, edi835.GetSegments().Length);
+                    Assert.AreEqual(edi835.TransactionSet.SE.TransactionSegmentCount, edi835.TransactionSet.Indexes.Length);
                 }
             }
         }

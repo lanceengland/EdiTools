@@ -64,7 +64,7 @@ namespace EdiTools
         private System.DateTime _interchangedate = System.DateTime.MinValue;
         internal Interchange(EdiTools.EdiFile parent, EdiTools.Index isa, EdiTools.Index iea)
         {
-            string[] elements = isa.GetElements();
+            string[] elements = isa.Split();
             _isa.ISA01 = elements[1];
             _isa.ISA02 = elements[2];
             _isa.ISA03 = elements[3];
@@ -83,7 +83,7 @@ namespace EdiTools
             _isa.ISA16 = elements[16];
             _isa.Index = isa;
 
-            elements = iea.GetElements();
+            elements = iea.Split();
             _iea.IEA01 = elements[1];
             _iea.IEA02 = elements[2];
             _iea.Index = iea;
@@ -190,13 +190,16 @@ namespace EdiTools
         #endregion
 
         #region methods
-        public string GetLine()
+        public string Text
         {
-            return _ediFile.GetRawText().Substring(_start, _length);
+            get
+            {
+                return _ediFile.GetRawText().Substring(_start, _length);
+            }
         }
-        public string[] GetElements()
+        public string[] Split()
         {
-            return GetLine().Split(new char[] { _ediFile.Delimiter.Element }, StringSplitOptions.None);
+            return this.Text.Split(new char[] { _ediFile.Delimiter.Element }, StringSplitOptions.None);
         }
         #endregion
 
@@ -204,7 +207,7 @@ namespace EdiTools
         private string _name;
         private int _start;
         private int _length;
-        public EdiTools.EdiFile _ediFile;
+        private EdiTools.EdiFile _ediFile;
         #endregion
     }
     public sealed class EdiFile
@@ -362,7 +365,7 @@ namespace EdiTools
             _parent = parent;
 
             // gs
-            string[] elements = gs.GetElements();
+            string[] elements = gs.Split();
             _gs.GS01 = elements[1];
             _gs.GS02 = elements[2];
             _gs.GS03 = elements[3];
@@ -374,7 +377,7 @@ namespace EdiTools
             _gs.Index = gs;
 
             // ge
-            elements = ge.GetElements();
+            elements = ge.Split();
             _ge.GE01 = elements[1];
             _ge.GE02 = elements[2];
             _ge.Index = ge;
@@ -447,13 +450,13 @@ namespace EdiTools
             EdiTools.Index st = indexes[0];
             EdiTools.Index se = indexes[indexes.Length - 1];
 
-            string[] elements = st.GetElements();
+            string[] elements = st.Split();
             _st = new EdiTools.ST();
             _st.ST01 = elements[1];
             _st.ST02 = elements[2];
             _st.Index = st;
 
-            elements = se.GetElements();
+            elements = se.Split();
             _se = new EdiTools.SE();
             _se.SE01 = elements[1];
             _se.SE02 = elements[2];
@@ -472,7 +475,7 @@ namespace EdiTools
         public EdiTools.SE SE { get { return _se; } }
         public string ID { get { return _st.ST01; } }
         public string ControlNumber { get { return _st.ST02; } }
-        internal EdiTools.Index[] Indexes { get { return _indexes; } }
+        public EdiTools.Index[] Indexes { get { return _indexes; } }
         public EdiTools.FunctionalGroup FunctionalGroup { get { return _parent; } }
         #endregion
 
@@ -502,7 +505,7 @@ namespace EdiTools
         }
 
         #region properties
-        public string Body
+        public string Text
         {
             get
             {
@@ -512,28 +515,14 @@ namespace EdiTools
                 }
                 else
                 {
-                    return Unwrap();
+                    return _transactionSet.Unwrap();
                 }
             }
         }
         #endregion
 
-        #region methods
-        public string GetRawText() { return _transactionSet.GetRawText(); }
-        public string Unwrap() { return _transactionSet.Unwrap(); }
-        public string[][] GetSegments()
-        {
-            System.Collections.Generic.List<string[]> segments = new System.Collections.Generic.List<string[]>();
-            foreach (EdiTools.Index idx in _transactionSet.Indexes)
-            {
-                segments.Add(idx.GetElements());
-            }
-            return segments.ToArray();
-        }
-        #endregion
-
         #region private
-        private EdiTools.TransactionSet _transactionSet;
+        protected EdiTools.TransactionSet _transactionSet;
         #endregion
     }
     public sealed class Edi835 :EdiImplementationBase
@@ -549,19 +538,19 @@ namespace EdiTools
                 string[] elements;
                 if (idx.Name == "BPR")
                 {
-                    elements = idx.GetElements();
+                    elements = idx.Split();
 
                     System.Decimal.TryParse(elements[2], out _totalActualProviderPaymentAmount);
                     _senderBankAccountNumber = elements[9];
                 }
                 if (idx.Name == "TRN")
                 {
-                    elements = idx.GetElements();
+                    elements = idx.Split();
                     _checkorEFTTraceNumber = elements[2];
                 }
                 if (idx.Name == "N1")
                 {
-                    elements = idx.GetElements();
+                    elements = idx.Split();
                     if (elements[1] == "PR")
                     {
                         _payer = elements[2];
@@ -576,7 +565,6 @@ namespace EdiTools
         }
 
         #region private
-        private EdiTools.TransactionSet _transactionSet;
         private string _payer;
         private string _payee;
         private string _senderBankAccountNumber;
