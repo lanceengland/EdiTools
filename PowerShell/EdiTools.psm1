@@ -597,6 +597,8 @@ function Get-EdiFile {
         A System.IO.FileInfo object. The parameter is best used when piped from Get-ChildItem 
     .PARAMETER Path
         A Microsoft.PowerShell.Commands.MatchInfo object. This parameter is best used when piped from Select-String
+    .PARAMETER NoLogo
+        Used with the -Verbose flag, does not write the EdiTools logo to the verbose stream
     .NOTES
         Author: Lance England
         Blog: http://lance-england.com
@@ -636,14 +638,17 @@ function Get-EdiFile {
                    Position = 0, 
                    Mandatory = $true, 
                    ValueFromPipeline = $true)]
-        [Microsoft.PowerShell.Commands.MatchInfo] $MatchInfo
+        [Microsoft.PowerShell.Commands.MatchInfo] $MatchInfo,
+
+        [Switch] $NoLogo
     )
 
         Begin {
             # Maintain a string dictionary to not parse the same file multiple times from Select-String input
             $fileList = New-Object System.Collections.Specialized.StringDictionary
 
-            Write-Verbose @"
+            if (-not $NoLogo) {
+                Write-Verbose @"
 
 _______   _ _ ________         __     
 |  ____|  | (_)__   __|        | |    
@@ -655,6 +660,7 @@ _______   _ _ ________         __
 https://github.com/lanceengland/EdiTools
 
 "@
+            }
         }
     
         Process {
