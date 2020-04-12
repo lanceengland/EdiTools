@@ -187,15 +187,19 @@ namespace EdiTools
         public string Name { get { return _name; } set { _name = value; } }
         public int Start { get { return _start; } set { _start = value; } }
         public int Length { get { return _length; } set { _length = value; } }
-        #endregion
-
-        #region methods
         public string Text
         {
             get
             {
                 return _ediFile.GetRawText().Substring(_start, _length);
             }
+        }
+        #endregion
+
+        #region methods
+        public string GetValue(int elementNumber)
+        {
+            return this.Split()[elementNumber];
         }
         public string[] Split()
         {
@@ -326,7 +330,7 @@ namespace EdiTools
                     indexes.Add(idx);
 
                     // reset for next loop
-                    sb = new System.Text.StringBuilder();
+                    sb.Clear();
                     idx = new EdiTools.Index(this);
                     idx.Start = i + 1 + _delimiter.Line.Length; /* The + 1 is to move the index past the segment delimiter position */
                 }

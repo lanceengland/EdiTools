@@ -1,4 +1,5 @@
 ﻿using NUnit.Framework;
+using System.Linq;
 
 namespace EdiTools.Tests
 {
@@ -274,6 +275,28 @@ IEA*1*000000001~";
                     Assert.AreEqual(sets[1].ST.ST02, "112299");
                     Assert.AreEqual(sets[1].SE.SE02, "112299");
                     Assert.AreEqual(sets[1].ControlNumber, "112299");
+                }
+            }
+        }
+
+        [Test]
+        public void TestIndex()
+        {
+            foreach (var f in _edi835testFiles)
+            {
+                foreach (var g in f.FunctionalGroups)
+                {
+                    var sets = g.GetTransactionSets();
+                    Assert.AreEqual(sets.Length, 2);
+
+                    var indexes = sets[0].Indexes;
+                    var bpr = indexes.Where(i => i.Name == "BPR").ToArray();
+
+                    Assert.AreEqual(bpr.Length, 1);
+                    Assert.AreEqual(bpr[0].GetValue(10), "8076853391");
+
+                    // throws out of range exception
+                    Assert.Throws<System.IndexOutOfRangeException>(() => bpr[0].GetValue(99));
                 }
             }
         }
