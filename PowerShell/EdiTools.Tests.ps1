@@ -1,5 +1,4 @@
-﻿$here = Split-Path -Parent $MyInvocation.MyCommand.Path
-Import-Module -Name "$here\EdiTools.psm1" 
+﻿Import-Module -Name 'EdiTools.psm1' -Verbose
 
 Describe 'EdiTools' {
 
@@ -181,13 +180,21 @@ IEA*1*000000001~
         }
     }
 
-    Context 'Get-EdiTransactionSet'{
-        It 'placeholder' {
-            1 + 1 | Should Be 2 
+    Context 'Get-EdiTransactionSet' {
+        Get-ChildItem -Path $TestDrive | 
+            Get-EdiFile |
+            Get-EdiTransactionSet -OutVariable ts
+
+        It 'parses transaction sets' {
+            $ts.Count | Should Be 12
+        }
+
+        It 'promotes a ControlNumber property' {
+            $ts[0].ControlNumber -eq '112233'
         }
     }
 
-    Context 'Get-Edi835'{
+    Context 'Get-Edi835' {
         It 'placeholder' {
             1 + 1 | Should Be 2 
         }
