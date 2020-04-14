@@ -529,7 +529,7 @@ namespace EdiTools
         protected EdiTools.TransactionSet _transactionSet;
         #endregion
     }
-    public sealed class Edi835 :EdiImplementationBase
+    public sealed class Edi835 : EdiImplementationBase
     {
         public Edi835(EdiTools.TransactionSet transactionSet) : base(transactionSet)
         {

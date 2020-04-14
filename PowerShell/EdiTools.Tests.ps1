@@ -189,14 +189,55 @@ IEA*1*000000001~
             $ts.Count | Should Be 12
         }
 
-        It 'promotes a ControlNumber property' {
-            $ts[0].ControlNumber -eq '112233'
+        It 'parses a ControlNumber property' {
+            # test file #1
+            $ts[0].ControlNumber | Should Be '112233'
+            $ts[1].ControlNumber | Should Be '112299'
+            $ts[2].ControlNumber | Should Be '112233'
+            $ts[3].ControlNumber | Should Be '112299'
+
+            # test file #2
+            $ts[4].ControlNumber | Should Be '112233'
+            $ts[5].ControlNumber | Should Be '112299'
+            $ts[6].ControlNumber | Should Be '112233'
+            $ts[7].ControlNumber | Should Be '112299'
+
+            # test file #3
+            $ts[8].ControlNumber | Should Be '112233'
+            $ts[9].ControlNumber | Should Be '112299'
+            $ts[10].ControlNumber | Should Be '112233'
+            $ts[11].ControlNumber | Should Be '112299'
         }
     }
 
     Context 'Get-Edi835' {
-        It 'placeholder' {
-            1 + 1 | Should Be 2 
+        Get-ChildItem -Path $TestDrive | 
+            Get-EdiFile |
+            Get-EdiTransactionSet |
+            Get-Edi835 -OutVariable edi835
+
+        It 'parses transaction sets' {
+            $edi835.Count | Should Be 12
+        }
+
+        It 'parses a CheckorEFTTraceNumber property' {
+            # test file #1
+            $edi835[0].CheckorEFTTraceNumber | Should Be '051036622050010'
+            $edi835[1].CheckorEFTTraceNumber | Should Be '051036622050011'
+            $edi835[2].CheckorEFTTraceNumber | Should Be '051036622050010'
+            $edi835[3].CheckorEFTTraceNumber | Should Be '051036622050011'
+
+            # test file #2
+            $edi835[4].CheckorEFTTraceNumber | Should Be '051036622050010'
+            $edi835[5].CheckorEFTTraceNumber | Should Be '051036622050011'
+            $edi835[6].CheckorEFTTraceNumber | Should Be '051036622050010'
+            $edi835[7].CheckorEFTTraceNumber | Should Be '051036622050011'
+
+            # test file #3
+            $edi835[8].CheckorEFTTraceNumber | Should Be '051036622050010'
+            $edi835[9].CheckorEFTTraceNumber | Should Be '051036622050011'
+            $edi835[10].CheckorEFTTraceNumber | Should Be '051036622050010'
+            $edi835[11].CheckorEFTTraceNumber | Should Be '051036622050011'
         }
     }
 }
