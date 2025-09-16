@@ -27,9 +27,11 @@ namespace EdiTools
         {
             get 
             {
-                // todo: strip segmenet delimiter and line-endings from last element
                 var elements = this.Text.Split(new char[] { this.Delimiter.Element });
-                elements[elements.Length - 1] = elements[elements.Length - 1].Replace(this.Delimiter.Segment.ToString(), string.Empty).Replace(this.Delimiter.LineTerminator, string.Empty);
+
+                // strip line-endings off last element
+                var lastIndex = elements.Length - 1;
+                elements[lastIndex] = elements[lastIndex].Substring(0, elements[lastIndex].Length - 1 /* segment delimiter  */ - this.Delimiter.LineTerminator.Length);
                 return elements;
             }
         }
