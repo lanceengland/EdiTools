@@ -1,3 +1,4 @@
+using EdiTools.Edi837;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -127,6 +128,102 @@ namespace EdiTools
                     sb.Append(System.Environment.NewLine);
                 }
                 return sb.ToString();
+            }
+        }
+
+        static public List<Segment> Extract837ForPatientControlNumber(EdiFile ediFile, string patientControlNumber)
+        {
+            bool isMatchFound = false;
+
+            // used to capture the all levels when matched
+            FunctionalGroup matchedFunctionalGroup = null;
+            Edi837.DocumentHierarchy matchedDocumentHierarchy = null;
+            BillingProvider matchedBillingProvider = null;
+            Subscriber matchedSubscriber = null;
+            Patient matchedPatient = null;
+            Claim matchedClaim = null;
+
+            foreach(var functionalGroup in ediFile.FunctionalGroups)
+            {
+                matchedFunctionalGroup = functionalGroup;
+                foreach (var transactionSet in functionalGroup.TransactionSets)
+                {
+                    matchedDocumentHierarchy = new Edi837.DocumentHierarchy(transactionSet.Segments);
+                    foreach(var billingProvider in matchedDocumentHierarchy.BillingProviders)
+                    {
+                        matchedBillingProvider = billingProvider;
+                        foreach (var subscriber in billingProvider.Subscribers)
+                        {
+                            matchedSubscriber = subscriber;
+                            foreach(var claim in subscriber.Claims)
+                            {
+                                matchedClaim = claim;
+                                if (claim.PatientControlNumber == patientControlNumber)
+                                {
+                                    isMatchFound = true;
+                                    break;
+                                }
+                            }
+
+                            // patients
+                            foreach(var patient in subscriber.Patients)
+                            {
+                                matchedPatient = patient;
+                                foreach (var claim in patient.Claims)
+                                {
+                                    matchedClaim = claim;
+                                    if (claim.PatientControlNumber == patientControlNumber)
+                                    {
+                                        isMatchFound = true; 
+                                        break;
+                                    }
+
+                                } // claims
+                                if (isMatchFound) break;
+                                matchedPatient = null; // reset patient each loop for test subcriber or patient loop
+
+                            } // patients
+                            if (isMatchFound) break;                      
+                        }
+                        if (isMatchFound) break;
+                    }
+                    if (isMatchFound) break;
+                }
+                if (isMatchFound) break;
+            }
+
+            if (isMatchFound)
+            {
+                var segments = new List<Segment>();
+                segments.Add(ediFile.Interchange.ISA);
+                segments.Add(matchedFunctionalGroup.GS);
+
+                // 
+                segments.AddRange(matchedDocumentHierarchy.Segments.GetRange(0, matchedDocumentHierarchy.Segments.Count - 1));
+                
+                segments.AddRange(matchedBillingProvider.Segments);
+                segments.AddRange(matchedSubscriber.Segments);
+
+                // determine if the matched claim is in the patient loop or subscriber loop
+                if (matchedPatient != null)
+                {
+                    segments.AddRange(matchedPatient.Segments);
+                    segments.AddRange(matchedClaim.Segments);
+                }
+                else
+                {
+                    segments.AddRange(matchedClaim.Segments);
+                }
+
+                // get last transaction set segment 'SE'
+                segments.Add(matchedDocumentHierarchy.Segments[matchedDocumentHierarchy.Segments.Count - 1]);
+                segments.Add(matchedFunctionalGroup.GE);
+                segments.Add(ediFile.Interchange.IEA);
+                return segments;
+            }
+            else
+            {
+                return null;
             }
         }
     }
