@@ -161,11 +161,11 @@ namespace EdiTools
                                 if (claim.PatientControlNumber == patientControlNumber)
                                 {
                                     isMatchFound = true;
-                                    break;
+                                    break; // claim
                                 }
                             }
 
-                            // patients
+                            // patient loop
                             foreach(var patient in subscriber.Patients)
                             {
                                 matchedPatient = patient;
@@ -175,21 +175,19 @@ namespace EdiTools
                                     if (claim.PatientControlNumber == patientControlNumber)
                                     {
                                         isMatchFound = true; 
-                                        break;
+                                        break; // claims
                                     }
-
-                                } // claims
-                                if (isMatchFound) break;
-                                matchedPatient = null; // reset patient each loop for test subcriber or patient loop
-
-                            } // patients
-                            if (isMatchFound) break;                      
+                                }
+                                if (isMatchFound) break; // patient
+                                matchedPatient = null; // reset to indicate inside patient or sub loop on match
+                            }
+                            if (isMatchFound) break; // subscriber      
                         }
-                        if (isMatchFound) break;
+                        if (isMatchFound) break; // billing provider
                     }
-                    if (isMatchFound) break;
+                    if (isMatchFound) break; // transaction set
                 }
-                if (isMatchFound) break;
+                if (isMatchFound) break; // functional group
             }
 
             if (isMatchFound)
@@ -198,7 +196,7 @@ namespace EdiTools
                 segments.Add(ediFile.Interchange.ISA);
                 segments.Add(matchedFunctionalGroup.GS);
 
-                // 
+                // Get all segments before the matched billing provider and also not the trailing 'SE' segment
                 segments.AddRange(matchedDocumentHierarchy.Segments.GetRange(0, matchedDocumentHierarchy.Segments.Count - 1));
                 
                 segments.AddRange(matchedBillingProvider.Segments);

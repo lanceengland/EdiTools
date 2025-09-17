@@ -13,9 +13,7 @@ namespace EdiTools.Edi837
         {
             get
             {
-                var firstSegment = this.Segments[0];
-                var lastSegment = this.Segments[Segments.Count - 1];
-                return firstSegment._fileContent.Substring(firstSegment.Start, lastSegment.Start - firstSegment.Start + lastSegment.Length);
+                return this.Segments.GetTextFromFirstToLastSegment();
             }
         }
         public List<Claim> Claims { get; set; } = new List<Claim>();

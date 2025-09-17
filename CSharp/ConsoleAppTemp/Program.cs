@@ -13,6 +13,7 @@ internal class Program
 			var t = f.FunctionalGroups[0].TransactionSets[0];
 
 			var segs = EdiFile.Extract837ForPatientControlNumber(f, "1001A");
+			Console.WriteLine(segs.CombineSegmentText());
 
 			Console.WriteLine("fin");
 		}

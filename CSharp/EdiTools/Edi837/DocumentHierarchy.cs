@@ -41,5 +41,12 @@ namespace EdiTools.Edi837
         }
         public List<Segment> Segments { get; set; } = new List<Segment>();
         public List<BillingProvider> BillingProviders { get; set; } = new List<BillingProvider>();
+        public string Text
+        {
+            get
+            {
+                return this.Segments.GetTextFromFirstToLastSegment();
+            }
+        }
     }
 }
