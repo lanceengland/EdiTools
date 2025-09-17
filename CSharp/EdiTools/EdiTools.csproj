@@ -44,6 +44,7 @@
   <ItemGroup>
     <Compile Include="Edi837\BillingProvider.cs" />
     <Compile Include="Edi837\Claim.cs" />
+    <Compile Include="Edi837\File.cs" />
     <Compile Include="Edi837\Patient.cs" />
     <Compile Include="Edi837\Subscriber.cs" />
     <Compile Include="Delimiter.cs" />
