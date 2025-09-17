@@ -18,7 +18,7 @@ namespace EdiTools
         {
             get
             {
-                return this.GS._fileContent.Substring(this.GS.Start, this.GE.Start - this.GS.Start + this.GE.Length);
+                return this.Segments.GetTextFromFirstToLastSegment();
             }
         }
         public List<Segment> Segments 

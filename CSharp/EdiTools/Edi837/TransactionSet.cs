@@ -8,7 +8,6 @@ namespace EdiTools.Edi837
         {
             if (this.ID != "837") { throw new ArgumentException("Expected an EDI transaction set of type 837."); }
         }
-
         public TransactionSet(EdiTools.TransactionSet other) : base(other)
         {
             if (this.ID != "837") { throw new ArgumentException("Expected an EDI transaction set of type 837."); }

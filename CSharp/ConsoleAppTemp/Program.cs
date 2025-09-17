@@ -11,10 +11,9 @@ internal class Program
 			var f = new EdiFile(@"C:\Users\LanceEngland\source\repos\EdiTools2\samples\sample837-P.txt");
 
 			var t = f.FunctionalGroups[0].TransactionSets[0];
+			var segs = EdiTools.Edi837.FileOperations.GetEdi837SegmentsForPatientControlNumber(f, "1001A");
 
-			//var hierarchy = new EdiTools.Edi837.DocumentHierarchy(t.Segments);
-
-			var foo = new EdiTools.Edi837.TransactionSet(t);
+            Console.WriteLine(segs.CombineSegmentText());
 
 			Console.WriteLine("fin");
 		}

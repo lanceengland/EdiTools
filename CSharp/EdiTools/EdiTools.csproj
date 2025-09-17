@@ -44,6 +44,7 @@
   <ItemGroup>
     <Compile Include="Edi837\BillingProvider.cs" />
     <Compile Include="Edi837\Claim.cs" />
+    <Compile Include="Edi837\File.cs" />
     <Compile Include="Edi837\Patient.cs" />
     <Compile Include="Edi837\Subscriber.cs" />
     <Compile Include="Delimiter.cs" />
@@ -55,6 +56,7 @@
     <Compile Include="Segment.cs" />
     <Compile Include="Interchange.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ListExtensions.cs" />
     <Compile Include="TransactionSet.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

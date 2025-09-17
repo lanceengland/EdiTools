@@ -1,3 +1,4 @@
+using EdiTools.Edi837;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -8,7 +9,7 @@ namespace EdiTools
     {
         public EdiFile(string path)
         {
-            if (!File.Exists(path))
+            if (!System.IO.File.Exists(path))
             {
                 throw new FileNotFoundException($"The file {path} is not found.");
             }
