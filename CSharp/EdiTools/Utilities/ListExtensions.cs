@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Text;
 
-namespace EdiTools
+namespace EdiTools.Utilities
 {
     public static class ListExtensions
     {

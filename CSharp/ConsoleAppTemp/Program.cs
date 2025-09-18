@@ -1,5 +1,5 @@
 ﻿using EdiTools;
-using EdiTools.Edi837;
+using EdiTools.Utilities;
 using System;
 
 internal class Program
@@ -11,7 +11,7 @@ internal class Program
 			var f = new EdiFile(@"C:\Users\LanceEngland\source\repos\EdiTools2\samples\sample837-P.txt");
 
 			var t = f.FunctionalGroups[0].TransactionSets[0];
-			var segs = EdiTools.Edi837.FileOperations.GetEdi837SegmentsForPatientControlNumber(f, "1001A");
+			var segs = EdiTools.Utilities.FileOperations.GetEdi837SegmentsForPatientControlNumber(f, "1001A");
 
             Console.WriteLine(segs.CombineSegmentText());
 

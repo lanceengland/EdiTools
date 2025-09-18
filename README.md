@@ -43,6 +43,8 @@ For example, the Interchange segments ISA09 and ISA10 are interchange date and t
 
 ## Installation
 
+To do: new installation instructions
+<!--
 If you don't want to clone the repo, and just want to install the PowerShell module:
 
 1. [Download the EdiTools.psm1 file](https://github.com/lanceengland/EdiTools/raw/master/PowerShell/EdiTools.psm1)
@@ -52,6 +54,7 @@ If you don't want to clone the repo, and just want to install the PowerShell mod
 3. Right-click on the file and choose Properties -> Click the Unblock button
 
 4. From a PowerShell prompt, type "Import-Module EdiTools -Verbose" (the -Verbose is optional, but will give you conformation the cmdlets installed).
+-->
 
 ## Project Roadmap
 
@@ -61,3 +64,9 @@ Future development may include:
 * Move up to at least PowerShell 3.0 (once my primary use case upgrade their client machines :))
 * Change Add-Type from inline C\# to referenced DLL
 * Create a .net Core and PowerShell Core version?
+
+## To Do
+
+- Update Readme
+- Split 837 file by patient control number
+- Make Segment data (specifically en element value) updatable without changing source document.

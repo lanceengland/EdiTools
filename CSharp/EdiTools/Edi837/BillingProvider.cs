@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using EdiTools.Utilities;
+using System.Collections.Generic;
 
 namespace EdiTools.Edi837
 {

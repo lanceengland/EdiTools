@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using EdiTools.Utilities;
+using System.Collections.Generic;
 
-// todo: better namespace
 namespace EdiTools.Edi837
 {
     public class DocumentHierarchy
