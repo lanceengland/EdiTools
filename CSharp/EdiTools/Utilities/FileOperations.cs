@@ -1,6 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using EdiTools.Edi837;
+using System.Collections.Generic;
 
-namespace EdiTools.Edi837
+namespace EdiTools.Utilities
 {
     public static class FileOperations
     {
