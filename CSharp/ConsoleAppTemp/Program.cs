@@ -13,7 +13,14 @@ internal class Program
 			var t = f.FunctionalGroups[0].TransactionSets[0];
 			var segs = EdiTools.Utilities.FileOperations.GetEdi837SegmentsForPatientControlNumber(f, "1001A");
 
-            Console.WriteLine(segs.CombineSegmentText());
+			//Console.WriteLine(segs.CombineSegmentText());
+
+			var se = segs[segs.Count - 3];
+			var elements = se.Elements;
+			var delimiter = se.Delimiter;
+            elements[1] = "some number";
+
+			Console.WriteLine(Segment.TextFromElements(elements, delimiter));
 
 			Console.WriteLine("fin");
 		}

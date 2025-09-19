@@ -1,4 +1,5 @@
 ﻿using System.Runtime.InteropServices;
+using System.Text;
 
 namespace EdiTools
 {
@@ -35,14 +36,21 @@ namespace EdiTools
                 return elements;
             }
         }
-
-        // todo: iterator for elements
-
         public Delimiter Delimiter
         {
             get;
             private set;
         }
         internal string _fileContent;
+
+        public static string TextFromElements(string[] elements, Delimiter delimiter)
+        {
+            var sb = new StringBuilder(elements.Length + 3); // extra 3 for trailing segment delimiter and possible line endings
+            return 
+                sb.Append(string.Join(delimiter.Element.ToString(), elements))
+                  .Append(delimiter.Segment)
+                  .Append(delimiter.LineTerminator)
+                  .ToString();
+        }
     }
 }
