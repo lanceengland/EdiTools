@@ -26,8 +26,9 @@ internal class Program
 				Console.WriteLine("New transqction set");
 				foreach(var seg in splits)
 				{
-					Console.WriteLine(seg);
+					Console.Write(seg.Text);
 				}
+                Console.WriteLine();
                 Console.WriteLine();
             }
 			
