@@ -15,14 +15,22 @@ internal class Program
 
 			//Console.WriteLine(segs.CombineSegmentText());
 
-			var se = segs[segs.Count - 3];
-			var elements = se.Elements;
-			var delimiter = se.Delimiter;
-            elements[1] = "some number";
+			//var se = segs[segs.Count - 3];
+			//var elements = se.Elements;
+			//var delimiter = se.Delimiter;
+   //         elements[1] = "some number";
+			//Console.WriteLine(Segment.TextFromElements(elements, delimiter));
 
-			Console.WriteLine(Segment.TextFromElements(elements, delimiter));
-
-			Console.WriteLine("fin");
+			foreach(var splits in FileOperations.SplitEdi837ByPatientControlNumber(f))
+			{
+				Console.WriteLine("New transqction set");
+				foreach(var seg in splits)
+				{
+					Console.WriteLine(seg);
+				}
+                Console.WriteLine();
+            }
+			
 		}
 		catch (System.Exception e)
 		{
@@ -30,7 +38,9 @@ internal class Program
 		}
 		finally 
 		{
-			Console.Write("Press ENTER to close...");
+            Console.WriteLine("fin");
+			Console.WriteLine();
+            Console.Write("Press ENTER to close...");
 			Console.ReadLine();
 		}
     }

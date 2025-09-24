@@ -5,7 +5,7 @@ namespace EdiTools.Utilities
 {
     public static class FileOperations
     {
-        static public List<Segment> GetEdi837SegmentsForPatientControlNumber(EdiFile ediFile, string patientControlNumber)
+        public static List<Segment> GetEdi837SegmentsForPatientControlNumber(EdiFile ediFile, string patientControlNumber)
         {
             bool isMatchFound = false;
 
@@ -98,5 +98,61 @@ namespace EdiTools.Utilities
                 return null;
             }
         }
+        public static IEnumerable<List<Segment>> SplitEdi837ByPatientControlNumber(EdiFile ediFile)
+        {
+            // todo: isa,gs, trx envelope & claim split logic
+            foreach(var fg in ediFile.FunctionalGroups)
+            {
+                foreach(var trx in fg.TransactionSets)
+                {
+                    var dh = new Edi837.DocumentHierarchy(trx.Segments);
+                    foreach(var bp in dh.BillingProviders)
+                    {
+                        foreach(var sub in bp.Subscribers)
+                        {
+                            // subscriber claims
+                            foreach(var c in sub.Claims)
+                            {
+
+                            }
+
+                            // patient claims
+                            foreach(var p in sub.Patients)
+                            {
+                                foreach (var c in p.Claims)
+                                {
+
+                                }
+                            }
+                        }
+                    }                    
+
+                    yield return trx.Segments;
+                }
+            }
+        }
+        public static IEnumerable<List<Segment>> Test()
+        {
+            var fileContents = "file contents";
+            Delimiter del = new Delimiter();
+            Segment seg = null;
+            List<Segment> innerList = null;
+
+            for (int i = 0; i < 3; i++)
+            {
+                innerList = new List<Segment>();
+                fileContents = fileContents + i.ToString();
+
+                // represents 'split' transaction set
+                for (int k = 0; k < 4; k++)
+                {
+                    seg = new Segment(fileContents, del);
+                    seg.Start = 0;
+                    seg.Length = 4;
+                    innerList.Add(seg);
+                }
+                yield return innerList;
+            }
+        }        
     }
 }
