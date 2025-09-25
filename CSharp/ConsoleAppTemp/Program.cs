@@ -23,7 +23,6 @@ internal class Program
 
 			foreach(var splits in FileOperations.SplitEdi837ByPatientControlNumber(f))
 			{
-				Console.WriteLine("New transqction set");
 				foreach(var seg in splits)
 				{
 					Console.Write(seg.Text);

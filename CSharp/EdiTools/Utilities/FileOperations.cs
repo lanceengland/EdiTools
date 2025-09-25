@@ -1,6 +1,5 @@
 ﻿using EdiTools.Edi837;
 using System.Collections.Generic;
-using System.Runtime.InteropServices.WindowsRuntime;
 
 namespace EdiTools.Utilities
 {
@@ -99,6 +98,7 @@ namespace EdiTools.Utilities
                 return null;
             }
         }
+        // todo: I cant return mutable segments
         public static IEnumerable<List<Segment>> SplitEdi837ByPatientControlNumber(EdiFile ediFile)
         {
             foreach(var fg in ediFile.FunctionalGroups)
@@ -112,12 +112,15 @@ namespace EdiTools.Utilities
                     var dh = new Edi837.DocumentHierarchy(trx.Segments);
 
                     returnVal.AddRange(dh.Segments.GetRange(0, dh.Segments.Count - 1)); // omit SE here, add it below
+
+                    var countOfSegmentsBeforeBillingProviders = returnVal.Count;
                     foreach(var bp in dh.BillingProviders)
                     {
                         returnVal.AddRange(bp.Segments);
                         foreach(var sub in bp.Subscribers)
                         {
                             returnVal.AddRange(sub.Segments);
+                            var countOfSegmentsBeforeClaims = returnVal.Count;
 
                             // subscriber claims
                             foreach(var c in sub.Claims)
@@ -127,12 +130,18 @@ namespace EdiTools.Utilities
                                 returnVal.Add(fg.GE);
                                 returnVal.Add(ediFile.Interchange.IEA);                                
                                 yield return returnVal;
+
+                                // remove claim segments for next iteration
+                                returnVal.RemoveRange(countOfSegmentsBeforeClaims, returnVal.Count - countOfSegmentsBeforeClaims - 1);
                             }
 
+                            // todo: clear subscriber claims 
                             // patient claims
                             foreach(var p in sub.Patients)
                             {
-                                returnVal.AddRange(p.Segments);                
+                                countOfSegmentsBeforeClaims = returnVal.Count;
+                                returnVal.AddRange(p.Segments);
+
                                 foreach (var c in p.Claims)
                                 {
                                     returnVal.AddRange(c.Segments);
@@ -140,6 +149,9 @@ namespace EdiTools.Utilities
                                     returnVal.Add(fg.GE);
                                     returnVal.Add(ediFile.Interchange.IEA);
                                     yield return returnVal;
+
+                                    // remove claim segments for next iteration
+                                    returnVal.RemoveRange(countOfSegmentsBeforeClaims, returnVal.Count - countOfSegmentsBeforeClaims - 1);
                                 }
                             } // patient
                         } // subscriber
