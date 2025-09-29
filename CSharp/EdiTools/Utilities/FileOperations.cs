@@ -205,7 +205,7 @@ namespace EdiTools.Utilities
                                 var seSegment = dh.Segments[dh.Segments.Count - 1];
                                 var seElements = seSegment.Elements;
                                 var transactionSetSegmentCount =
-                                    headerSegments.Count
+                                    headerSegments.Count -  // Don't count the ISA and GS
                                     + billingProviderSegments.Count
                                     + subscriberSegments.Count
                                     + c.Segments.Count
@@ -242,7 +242,7 @@ namespace EdiTools.Utilities
                                     var seSegment = dh.Segments[dh.Segments.Count - 1];
                                     var seElements = seSegment.Elements;
                                     var transactionSetSegmentCount =
-                                        headerSegments.Count
+                                        headerSegments.Count - 2 // Don't count the ISA and GS
                                         + billingProviderSegments.Count
                                         + subscriberSegments.Count
                                         + patientSegments.Count
