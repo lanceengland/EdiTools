@@ -26,7 +26,15 @@ namespace EdiTools
             {
                 if (this._elements != null)
                 {
-                    return "todo: implement";
+                    var sb = new StringBuilder();
+                    foreach(var element in this._elements)
+                    {
+                        sb.Append(element);
+                        sb.Append(this.Delimiter.Element);
+                    }
+                    sb.Append(this.Delimiter.Segment);
+                    sb.Append(this.Delimiter.LineTerminator);
+                    return sb.ToString();
                 }
                     
                 return _fileContent.Substring(this.Start, this.Length); 
@@ -50,7 +58,7 @@ namespace EdiTools
                 return elements;
             }
 
-            set
+            internal set
             {
                 this._elements = value;
             }
@@ -63,15 +71,15 @@ namespace EdiTools
         internal string _fileContent;
 
         // todo: delete this method
-        public static string TextFromElements(string[] elements, Delimiter delimiter)
-        {
-            var sb = new StringBuilder(elements.Length + 3); // extra 3 for trailing segment delimiter and possible line endings
-            return 
-                sb.Append(string.Join(delimiter.Element.ToString(), elements))
-                  .Append(delimiter.Segment)
-                  .Append(delimiter.LineTerminator)
-                  .ToString();
-        }
+        //public static string TextFromElements(string[] elements, Delimiter delimiter)
+        //{
+        //    var sb = new StringBuilder(elements.Length + 3); // extra 3 for trailing segment delimiter and possible line endings
+        //    return 
+        //        sb.Append(string.Join(delimiter.Element.ToString(), elements))
+        //          .Append(delimiter.Segment)
+        //          .Append(delimiter.LineTerminator)
+        //          .ToString();
+        //}
 
         private string[] _elements;
     }

@@ -162,6 +162,10 @@ namespace EdiTools.Utilities
         //    } // functional group
         //} // method
         
+        public static string Extract837ForPatientControlNumber(string patientControlNumber)
+        {
+            return "todo";
+        }
         public static IEnumerable<string> Split837ByClaims(EdiFile ediFile)
         {
             List<Segment> headerSegments = new List<Segment>(); // segments before the billing provider loop
@@ -192,16 +196,31 @@ namespace EdiTools.Utilities
                             // subscriber claims
                             foreach (var c in sub.Claims)
                             {
-                                var sb = new StringBuilder(16 * (headerSegments.Count * billingProviderSegments.Count + subscriberSegments.Count + c.Segments.Count));
+                                var sb = new StringBuilder(16 * (headerSegments.Count + billingProviderSegments.Count + subscriberSegments.Count + c.Segments.Count));
                                 sb.Append(headerSegments.ToText());
                                 sb.Append(billingProviderSegments.ToText());
                                 sb.Append(subscriberSegments.ToText());
                                 sb.Append(c.Text);
 
-                                // todo: update se02 and ge02
-                                sb.Append(dh.Segments[dh.Segments.Count - 1].Text); // SE
+                                var seSegment = dh.Segments[dh.Segments.Count - 1];
+                                var seElements = seSegment.Elements;
+                                var transactionSetSegmentCount =
+                                    headerSegments.Count
+                                    + billingProviderSegments.Count
+                                    + subscriberSegments.Count
+                                    + c.Segments.Count
+                                    + 1; // include the SE segment
+
+                                seElements[1] = transactionSetSegmentCount.ToString(); // update SE01 (segment count)
+                                seSegment.Elements = seElements; // write back to segment
+                                sb.Append(seSegment.Text); // SE
+
+                                var geElements = fg.GE.Elements;
+                                geElements[1] = "1"; // only 1 transactio set per functional group
+                                fg.GE.Elements = geElements;
                                 sb.Append(fg.GE.Text);
                                 sb.Append(ediFile.Interchange.IEA.Text);
+
                                 yield return sb.ToString();
                             }
 
@@ -213,17 +232,33 @@ namespace EdiTools.Utilities
                                 // patient claims
                                 foreach (var c in p.Claims)
                                 {
-                                    var sb = new StringBuilder(16 * (headerSegments.Count * billingProviderSegments.Count + subscriberSegments.Count + c.Segments.Count));
+                                    var sb = new StringBuilder(16 * (headerSegments.Count + billingProviderSegments.Count + subscriberSegments.Count + patientSegments.Count + c.Segments.Count));
                                     sb.Append(headerSegments.ToText());
                                     sb.Append(billingProviderSegments.ToText());
                                     sb.Append(subscriberSegments.ToText());
                                     sb.Append(p.Segments.ToText());
                                     sb.Append(c.Text);
 
-                                    // todo: update se02 and ge02
-                                    sb.Append(dh.Segments[dh.Segments.Count - 1].Text); // SE
+                                    var seSegment = dh.Segments[dh.Segments.Count - 1];
+                                    var seElements = seSegment.Elements;
+                                    var transactionSetSegmentCount =
+                                        headerSegments.Count
+                                        + billingProviderSegments.Count
+                                        + subscriberSegments.Count
+                                        + patientSegments.Count
+                                        + c.Segments.Count
+                                        + 1; // include the SE segment
+
+                                    seElements[1] = transactionSetSegmentCount.ToString(); // update SE01 (segment count)
+                                    seSegment.Elements = seElements; // write back to segment
+                                    sb.Append(seSegment.Text); // SE
+
+                                    var geElements = fg.GE.Elements;
+                                    geElements[1] = "1"; // only 1 transactio set per functional group
+                                    fg.GE.Elements = geElements;
                                     sb.Append(fg.GE.Text);
                                     sb.Append(ediFile.Interchange.IEA.Text);
+
                                     yield return sb.ToString();
                                 }
                             } // patient
