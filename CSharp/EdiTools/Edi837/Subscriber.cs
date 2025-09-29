@@ -12,7 +12,7 @@ namespace EdiTools.Edi837
         {
             get
             {
-                return this.Segments.GetTextFromFirstToLastSegment();
+                return this.Segments.ToText();
             }
         }
         public static List<Subscriber> ParseSubscriberLoop(List<Segment> segments)

@@ -1,12 +1,13 @@
 ﻿using System.Runtime.InteropServices;
+using System.Text;
 
 namespace EdiTools
 {
     public sealed class Segment
     {
-        public Segment(string contents, Delimiter delimiter)
+        public Segment(string ediText, Delimiter delimiter)
         {
-            _fileContent = contents;
+            _ediText = ediText;
             this.Delimiter = delimiter;
         }        
         public string Name { get; internal set; }
@@ -21,12 +22,34 @@ namespace EdiTools
         /// </summary>
         public string Text
         {
-            get {  return _fileContent.Substring(this.Start, this.Length); }
+            get 
+            {
+                if (this._elements != null)
+                {
+                    var sb = new StringBuilder();
+                    foreach(var element in this._elements)
+                    {
+                        sb.Append(element);
+                        sb.Append(this.Delimiter.Element);
+                    }
+                    sb.Append(this.Delimiter.Segment);
+                    sb.Append(this.Delimiter.LineTerminator);
+                    return sb.ToString();
+                }
+                    
+                return _ediText.Substring(this.Start, this.Length); 
+            }
         }
+        // make internal after testing
         public string[] Elements
         {
             get 
             {
+                if (this._elements != null)
+                {
+                    return this._elements;
+                }
+
                 var elements = this.Text.Split(new char[] { this.Delimiter.Element });
 
                 // strip line-endings off last element
@@ -34,15 +57,19 @@ namespace EdiTools
                 elements[lastIndex] = elements[lastIndex].Substring(0, elements[lastIndex].Length - 1 /* segment delimiter  */ - this.Delimiter.LineTerminator.Length);
                 return elements;
             }
+
+            internal set
+            {
+                this._elements = value;
+            }
         }
-
-        // todo: iterator for elements
-
         public Delimiter Delimiter
         {
             get;
             private set;
         }
-        internal string _fileContent;
+
+        private string _ediText;
+        private string[] _elements;
     }
 }

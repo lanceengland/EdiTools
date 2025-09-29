@@ -28,7 +28,6 @@ namespace EdiTools
                 throw new System.IO.InvalidDataException("No ISA segment found. Not an EDI file.");
             }
 
-            // todo: possibly make this a struct
             this.Delimiter = new Delimiter
             {
                 Element = this.Text[103],
