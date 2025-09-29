@@ -14,8 +14,9 @@ internal class Program
 			var t = f.FunctionalGroups[0].TransactionSets[0];
 			//var segs = EdiTools.Utilities.FileOperations.GetEdi837SegmentsForPatientControlNumber(f, "1001A");
 
-			foreach(var text in FileOperations.Split837ByClaims(f))
-			{
+			foreach(var text in FileOperations.Split837ByClaims(f, "clm12345678"))
+
+            {
 				Console.WriteLine(text);
 				Console.WriteLine();
 			}
