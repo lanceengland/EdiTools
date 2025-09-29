@@ -5,9 +5,9 @@ namespace EdiTools
 {
     public sealed class Segment
     {
-        public Segment(string contents, Delimiter delimiter)
+        public Segment(string ediText, Delimiter delimiter)
         {
-            _fileContent = contents;
+            _ediText = ediText;
             this.Delimiter = delimiter;
         }        
         public string Name { get; internal set; }
@@ -37,7 +37,7 @@ namespace EdiTools
                     return sb.ToString();
                 }
                     
-                return _fileContent.Substring(this.Start, this.Length); 
+                return _ediText.Substring(this.Start, this.Length); 
             }
         }
         // make internal after testing
@@ -68,19 +68,8 @@ namespace EdiTools
             get;
             private set;
         }
-        internal string _fileContent;
 
-        // todo: delete this method
-        //public static string TextFromElements(string[] elements, Delimiter delimiter)
-        //{
-        //    var sb = new StringBuilder(elements.Length + 3); // extra 3 for trailing segment delimiter and possible line endings
-        //    return 
-        //        sb.Append(string.Join(delimiter.Element.ToString(), elements))
-        //          .Append(delimiter.Segment)
-        //          .Append(delimiter.LineTerminator)
-        //          .ToString();
-        //}
-
+        private string _ediText;
         private string[] _elements;
     }
 }

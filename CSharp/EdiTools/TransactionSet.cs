@@ -18,7 +18,7 @@ namespace EdiTools
         {
             get
             {
-                return this.Segments.GetTextFromFirstToLastSegment();
+                return this.Segments.ToText();
             }
         }
         public string ID { get { return this.ST.Elements[1]; } }

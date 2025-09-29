@@ -11,7 +11,7 @@ namespace EdiTools.Edi837
         {
             get
             {
-                return this.Segments.GetTextFromFirstToLastSegment();
+                return this.Segments.ToText();
             }
         }
         internal static List<BillingProvider> ParseBillingProviderLoop(List<Segment> segments)

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using EdiTools.Utilities;
 
 namespace EdiTools
 {
@@ -21,7 +22,7 @@ namespace EdiTools
             get
             {
                 // interchange is essentially the entire file
-                return this.Segments[0]._fileContent;
+                return this.Segments.ToText();
             }
         }
         public List<Segment> Segments { get; private set; }

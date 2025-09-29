@@ -10,7 +10,7 @@ namespace EdiTools.Edi837
         {
             get
             {
-                return this.Segments.GetTextFromFirstToLastSegment();
+                return this.Segments.ToText();
             }
         }
         public List<Claim> Claims { get; set; } = new List<Claim>();
