@@ -5,25 +5,26 @@ using System.Text;
 namespace EdiTools.Utilities
 {
     public static class FileOperations
-    {      
+    {
         public static IEnumerable<string> Split837ByClaims(EdiFile ediFile)
         {
             return Split837ByClaims(ediFile, null);
         }
         public static IEnumerable<string> Split837ByClaims(EdiFile ediFile, string patientControlNumber)
         {
-            List<Segment> headerSegments = new List<Segment>(); // segments before the billing provider loop
-            List<Segment> billingProviderSegments = null;
-            List<Segment> subscriberSegments = null;
-            List<Segment> patientSegments = null;
+            List<Segment> headerSegments; // segments before the billing provider loop
+            List<Segment> billingProviderSegments;
+            List<Segment> subscriberSegments;
+            List<Segment> patientSegments;
 
             foreach (var fg in ediFile.FunctionalGroups)
             {
-                headerSegments.Add(ediFile.Interchange.ISA);
-                headerSegments.Add(fg.GS);
-
                 foreach (var trx in fg.TransactionSets)
                 {
+                    headerSegments = new List<Segment>();
+                    headerSegments.Add(ediFile.Interchange.ISA);
+                    headerSegments.Add(fg.GS);
+
                     var dh = new Edi837.DocumentHierarchy(trx.Segments);
                     headerSegments.AddRange(dh.Segments.GetRange(0, dh.Segments.Count - 1)); // omit SE here, add it below
 
@@ -69,7 +70,11 @@ namespace EdiTools.Utilities
 
                                     yield return sb.ToString();
                                 }
-                            
+
+                                if (c.PatientControlNumber == patientControlNumber) 
+                                { 
+                                    yield break; 
+                                }
                             }
 
                             foreach (var p in sub.Patients)
@@ -110,6 +115,11 @@ namespace EdiTools.Utilities
                                         sb.Append(ediFile.Interchange.IEA.Text);
 
                                         yield return sb.ToString();
+                                    }
+
+                                    if (c.PatientControlNumber == patientControlNumber) 
+                                    { 
+                                        yield break; 
                                     }
                                 }
                             } // patient
