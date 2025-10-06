@@ -5,6 +5,10 @@ using System.Text;
 
 namespace EdiTools 
 {
+    /*
+     * todo: default constructor
+     * init from file (path) or by contents
+     */
     public sealed class  EdiFile
     {
         public EdiFile(string path)
