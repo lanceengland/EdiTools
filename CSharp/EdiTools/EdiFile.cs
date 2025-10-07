@@ -27,8 +27,7 @@ namespace EdiTools
             this.FileName = fi.Name;
             this.DirectoryName = fi.DirectoryName;
         }
-        
-        public void LoadFromString(string ediContent)
+                public void LoadFromString(string ediContent)
         {
             // reset since not loading from a file
             this.FullPath = string.Empty;

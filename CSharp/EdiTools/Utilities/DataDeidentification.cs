@@ -27,21 +27,35 @@ namespace EdiTools.Utilities
                         {
                             switch (elements[1])
                             {
-                                case "41":
-                                    // submitter
+                                case "41": // submitter
                                     elements[3] = "SUBMITTER";
                                     elements[4] = string.Empty;
                                     elements[5] = string.Empty;
+                                    elements[9] = "SUBMITTER-ID";
                                     break;
 
-                                case "40":
+                                case "40": // receiver
                                     elements[3] = "RECEIVER";
                                     elements[4] = string.Empty;
                                     elements[5] = string.Empty;
+                                    elements[9] = "RECEIVER-ID";
                                     break;
                             }
                             segment.Elements = elements; // write back to segment
                         }
+                        break;
+                    
+                    case "PER":
+                        elements[2] = "Contact Name";
+                        if (elements[3] == "EM")
+                        {
+                            elements[4] = "email@email.com";
+                        }
+                        else
+                        {
+                            elements[4] = "5555555555";
+                        }
+                        segment.Elements = elements; // write back to segment
                         break;
 
                     case "N3":
@@ -50,8 +64,7 @@ namespace EdiTools.Utilities
                     case "N4":
                         break;
 
-                    case "PER":
-                        break;
+
 
                     case "REF":
                         break;

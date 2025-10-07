@@ -18,6 +18,8 @@ internal class Program
             {
 				var deidentified = DataDeidentification.Deidentify837(text);
 
+
+				// just for display purposes
 				Console.WriteLine(deidentified);
 				Console.WriteLine();
 			}
