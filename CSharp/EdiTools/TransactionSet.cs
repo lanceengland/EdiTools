@@ -1,5 +1,6 @@
 ﻿using EdiTools.Utilities;
 using System.Collections.Generic;
+using System.Text;
 
 namespace EdiTools
 {
@@ -25,6 +26,23 @@ namespace EdiTools
         public string ControlNumber { get { return this.ST.Elements[2]; } }
         public string VersionIdentifier { get { return this.ST.Elements[3]; } }
         public List<Segment> Segments { get; private set; }
+        public string Unwrap()
+        {
+            if (this.ST.Delimiter.LineTerminator.Length == 0)
+            {
+                return this.Text;
+            }
+            else
+            {
+                var sb = new StringBuilder(16 * this.Segments.Count);
+                foreach (var idx in this.Segments)
+                {
+                    sb.Append(idx.Text);
+                    sb.Append(System.Environment.NewLine);
+                }
+                return sb.ToString();
+            }
+        }
         static public List<TransactionSet> ParseTransactionSets(List<Segment> segments)
         {
             var transactionSets = new List<TransactionSet>();

@@ -34,45 +34,45 @@ namespace EdiTools
             this.FileName = string.Empty;
             this.DirectoryName = string.Empty;
 
-            this.Text = ediContent;
+            this.OriginalText = ediContent;
             this.Segments = new List<Segment>();
 
-            if (this.Text.Substring(0, 3) != "ISA")
+            if (this.OriginalText.Substring(0, 3) != "ISA")
             {
                 throw new System.IO.InvalidDataException("No ISA segment found. Not an EDI file.");
             }
 
             this.Delimiter = new Delimiter
             {
-                Element = this.Text[103],
-                Component = this.Text[104],
-                Segment = this.Text[105],
+                Element = this.OriginalText[103],
+                Component = this.OriginalText[104],
+                Segment = this.OriginalText[105],
                 LineTerminator = string.Empty // determined in next step
             };
 
             /* Determine if wrapped (no line breaks) or unwrapped (line breaks cr, lf, or crlf) */
-            if (this.Text[106] == (char)13 || this.Text[106] == (char)10) /* carriage-return or new-line */
+            if (this.OriginalText[106] == (char)13 || this.OriginalText[106] == (char)10) /* carriage-return or new-line */
             {
                 this.IsUnwrapped = true;
 
-                if (this.Text[107] == (char)10) /* if the next char is new-line, assume cr/lf */
+                if (this.OriginalText[107] == (char)10) /* if the next char is new-line, assume cr/lf */
                 {
-                    this.Delimiter.LineTerminator = this.Text.Substring(106, 2);
+                    this.Delimiter.LineTerminator = this.OriginalText.Substring(106, 2);
                 }
                 else
                 {
-                    this.Delimiter.LineTerminator = this.Text[106].ToString();
+                    this.Delimiter.LineTerminator = this.OriginalText[106].ToString();
                 }
             }
 
             // build indexes
             var sb = new StringBuilder(100);
-            var segment = new EdiTools.Segment(this.Text, this.Delimiter);
+            var segment = new EdiTools.Segment(this.OriginalText, this.Delimiter);
             int startOfSegment = 0;
 
-            for (int i = 0; i < this.Text.Length; i++)
+            for (int i = 0; i < this.OriginalText.Length; i++)
             {
-                char c = this.Text[i];
+                char c = this.OriginalText[i];
 
                 // skip eol chars
                 if (c == '\r' || c == '\n')
@@ -91,7 +91,7 @@ namespace EdiTools
                     if (segment.Name == "IEA")
                     {
                         // accomodates present or missing line-break after last segment (IEA)
-                        segment.Length = this.Text.Length - startOfSegment;
+                        segment.Length = this.OriginalText.Length - startOfSegment;
                     }
                     else
                     {
@@ -104,7 +104,7 @@ namespace EdiTools
 
                     sb.Clear();
                     this.Segments.Add(segment);
-                    segment = new EdiTools.Segment(this.Text, this.Delimiter);
+                    segment = new EdiTools.Segment(this.OriginalText, this.Delimiter);
                 }
             }
 
@@ -112,10 +112,29 @@ namespace EdiTools
             this.FunctionalGroups = FunctionalGroup.ParseFunctionalGroups(this.Segments);
         }
         public Delimiter Delimiter { get; private set; }
-        public string Text
+        /// <summary>
+        /// This will return the EDI content excluding any changes via Segment.Elements (i.e. the original text)
+        /// </summary>
+        public string OriginalText
         {
             get;
             private set;
+        }
+
+        /// <summary>
+        /// This will return the EDI content including any changes via Segment.Elements
+        /// </summary>
+        public string Text
+        {
+            get
+            {
+                var sb = new StringBuilder(16 * this.Segments.Count);
+                foreach (var idx in this.Segments)
+                {
+                    sb.Append(idx.Text);
+                }
+                return sb.ToString();
+            }
         }
         public bool IsUnwrapped { get; private set; }
         public string FileName { get; private set; }
@@ -124,17 +143,15 @@ namespace EdiTools
         public List<EdiTools.Segment> Segments { get; private set; }        
         public EdiTools.Interchange Interchange { get; private set; }
         public List<FunctionalGroup> FunctionalGroups {  get; private set; }
-                
-        // todo: make a property?
         public string Unwrap()
         {
            if (this.IsUnwrapped)
             {
-                return this.Text;
+                return this.OriginalText;
             }
            else
             {
-                var sb = new StringBuilder();
+                var sb = new StringBuilder(16 * this.Segments.Count);
                 foreach (var idx in this.Segments)
                 {
                     sb.Append(idx.Text);
