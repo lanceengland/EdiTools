@@ -11,6 +11,7 @@ namespace EdiTools
      */
     public sealed class  EdiFile
     {
+        public EdiFile() { }
         public EdiFile(string path)
         {
             if (!System.IO.File.Exists(path))
@@ -18,14 +19,24 @@ namespace EdiTools
                 throw new FileNotFoundException($"The file {path} is not found.");
             }
 
-            this.Segments = new List<Segment>();
+            this.LoadFromString(File.ReadAllText(path));
 
+            // set file properties
             var fi = new System.IO.FileInfo(path);
             this.FullPath = fi.FullName;
             this.FileName = fi.Name;
             this.DirectoryName = fi.DirectoryName;
+        }
+        
+        public void LoadFromString(string ediContent)
+        {
+            // reset since not loading from a file
+            this.FullPath = string.Empty;
+            this.FileName = string.Empty;
+            this.DirectoryName = string.Empty;
 
-            this.Text = File.ReadAllText(path);
+            this.Text = ediContent;
+            this.Segments = new List<Segment>();
 
             if (this.Text.Substring(0, 3) != "ISA")
             {
