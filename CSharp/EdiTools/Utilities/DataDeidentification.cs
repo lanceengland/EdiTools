@@ -44,6 +44,13 @@ namespace EdiTools.Utilities
                                     elements[5] = String.IsNullOrEmpty(elements[5]) ? String.Empty : "Subscriber Middle Name";
                                     elements[9] = "SUBSCRIBER-ID";
                                     break;
+
+                                case "QC": // patient
+                                    elements[3] = String.IsNullOrEmpty(elements[4]) ? String.Empty : "Patient Last Name";
+                                    if (elements.Length > 4) { elements[4] = String.IsNullOrEmpty(elements[4]) ? String.Empty : "Patient First Name"; }
+                                    if (elements.Length > 5) { elements[5] = String.IsNullOrEmpty(elements[5]) ? String.Empty : "Patient Middle Name"; }
+                                    if (elements.Length > 9) { elements[9] = "PATIENT-ID"; }
+                                    break;
                             }
                         }
                         isDataChanged = true;
@@ -57,7 +64,7 @@ namespace EdiTools.Utilities
                         }
                         else
                         {
-                            elements[4] = "5555555555";
+                            elements[4] = "(555) 555-5555";
                         }
                         isDataChanged = true;
                         break;
@@ -103,12 +110,28 @@ namespace EdiTools.Utilities
                         break;
 
                     case "CLM":
+                        elements[1] = "Patient Control Number";
+                        isDataChanged = true;
+                        break;
+
+                    case "DTP":
+                        elements[1] = "19000101";
+                        if (elements.Length > 3) {
+                            elements[3] = String.IsNullOrEmpty(elements[3]) ? String.Empty : "19000101"; 
+                        }
                         isDataChanged = true;
                         break;
 
                     case "DMG":
+                        elements[2] = "19000101";
+                        elements[3] = "U";
                         isDataChanged = true;
                         break;
+
+                    case "NTE":
+                        isDataChanged = true;
+                        break;
+
                 } // switch
 
                 // write back to element data to segment if updated
