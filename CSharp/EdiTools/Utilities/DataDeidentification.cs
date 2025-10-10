@@ -22,77 +22,66 @@ namespace EdiTools.Utilities
                     case "NM1":
                         if (elements[2] == "1") // individual
                         {
+                            var name = string.Empty;
                             switch (elements[1])
                             {
                                 case "41": // submitter
-                                    elements[3] = String.IsNullOrEmpty(elements[3]) ? String.Empty : "Submitter Last Name";
-                                    elements[4] = String.IsNullOrEmpty(elements[4]) ? String.Empty : "Submitter First Name";
-                                    elements[5] = String.IsNullOrEmpty(elements[5]) ? String.Empty : "Submitter Middle Name";
-                                    elements[9] = "SUBMITTER-ID";
+                                    name = "Submitter";
                                     break;
 
                                 case "40": // receiver
-                                    elements[3] = String.IsNullOrEmpty(elements[3]) ? String.Empty : "Receiver Last Name";
-                                    elements[4] = String.IsNullOrEmpty(elements[4]) ? String.Empty : "Receiver First Name";
-                                    elements[5] = String.IsNullOrEmpty(elements[5]) ? String.Empty : "Receiver Middle Name";
-                                    elements[9] = "RECEIVER-ID";
+                                    name = "Receiver";
                                     break;
 
                                 case "IL": // subscriber
-                                    elements[3] = String.IsNullOrEmpty(elements[3]) ? String.Empty : "Subscriber Last Name";
-                                    elements[4] = String.IsNullOrEmpty(elements[4]) ? String.Empty : "Subscriber First Name";
-                                    elements[5] = String.IsNullOrEmpty(elements[5]) ? String.Empty : "Subscriber Middle Name";
-                                    elements[9] = "SUBSCRIBER-ID";
+                                    name = "Subscriber";
                                     break;
 
                                 case "QC": // patient
-                                    elements[3] = String.IsNullOrEmpty(elements[3]) ? String.Empty : "Patient Last Name";
-                                    if (elements.Length > 4) { elements[4] = String.IsNullOrEmpty(elements[4]) ? String.Empty : "Patient First Name"; }
-                                    if (elements.Length > 5) { elements[5] = String.IsNullOrEmpty(elements[5]) ? String.Empty : "Patient Middle Name"; }
-                                    if (elements.Length > 9) { elements[9] = "PATIENT-ID"; }
+                                    name = "Patient";
                                     break;
 
                                 case "DN": // referring provider
-                                    elements[3] = String.IsNullOrEmpty(elements[3]) ? String.Empty : "Referring Provider Name";
-                                    if (elements.Length > 4) { elements[4] = String.IsNullOrEmpty(elements[4]) ? String.Empty : "Referring First Name"; }
-                                    if (elements.Length > 5) { elements[5] = String.IsNullOrEmpty(elements[5]) ? String.Empty : "Referring Middle Name"; }
-                                    if (elements.Length > 9) { elements[9] = "Referring-ID"; }
+                                    name = "Referring Provider";
                                     break;
 
                                 case "P3": // Second referring provider
-                                    elements[3] = String.IsNullOrEmpty(elements[3]) ? String.Empty : "Referring2 Provider Name";
-                                    if (elements.Length > 4) { elements[4] = String.IsNullOrEmpty(elements[4]) ? String.Empty : "Referring2 First Name"; }
-                                    if (elements.Length > 5) { elements[5] = String.IsNullOrEmpty(elements[5]) ? String.Empty : "Referring2 Middle Name"; }
-                                    if (elements.Length > 9) { elements[9] = "Referring2-ID"; }
+                                    name = "Second referring provider";
                                     break;
 
                                 case "85": // billing provider
-                                    elements[3] = String.IsNullOrEmpty(elements[3]) ? String.Empty : "Billing Provider Name";
-                                    if (elements.Length > 4) { elements[4] = String.IsNullOrEmpty(elements[4]) ? String.Empty : "Provider First Name"; }
-                                    if (elements.Length > 5) { elements[5] = String.IsNullOrEmpty(elements[5]) ? String.Empty : "Provider Middle Name"; }
-                                    if (elements.Length > 9) { elements[9] = "PROVIDER-ID"; }
+                                    name = "Billing Provider";
                                     break;
 
                                 case "82": // rendering provider
-                                    elements[3] = String.IsNullOrEmpty(elements[3]) ? String.Empty : "Rendering Provider Name";
-                                    if (elements.Length > 4) { elements[4] = String.IsNullOrEmpty(elements[4]) ? String.Empty : "Rendering First Name"; }
-                                    if (elements.Length > 5) { elements[5] = String.IsNullOrEmpty(elements[5]) ? String.Empty : "Rendering Middle Name"; }
-                                    if (elements.Length > 9) { elements[9] = "RENDERING-ID"; }
+                                    name = "Rendering Provider";
+                                    break;
+
+                                case "QB":
+                                    name = "Purchase Service Provider";
+                                    break;
+
+                                case "DQ":
+                                    name = "Supervising Physician";
+                                    break;
+
+                                case "DK":
+                                    name = "Ordering Physician";
                                     break;
 
                                 default: // all other names
-                                    elements[3] = String.IsNullOrEmpty(elements[3]) ? String.Empty : "Default Name";
-                                    if (elements.Length > 4) { elements[4] = String.IsNullOrEmpty(elements[4]) ? String.Empty : "Default First Name"; }
-                                    if (elements.Length > 5) { elements[5] = String.IsNullOrEmpty(elements[5]) ? String.Empty : "Default Middle Name"; }
-                                    if (elements.Length > 9) { elements[9] = "DEFAULT-ID"; }
+                                    name = "Default";
                                     break;
-                            }
+                            } // switch
+
+                            // update NM1 elements
+                            elements[3] = String.IsNullOrEmpty(elements[3]) ? String.Empty : $"{name} Name";
+                            if (elements.Length > 4) { elements[4] = String.IsNullOrEmpty(elements[4]) ? String.Empty : $"{name} First Name"; }
+                            if (elements.Length > 5) { elements[5] = String.IsNullOrEmpty(elements[5]) ? String.Empty : $"{name} Middle Name"; }
+                            if (elements.Length > 9) { elements[9] = $"{name.ToUpper()}-ID"; }
+
+                            isDataChanged = true;
                         }
-
-                        // update both person and non-person entity 
-
-
-                        isDataChanged = true;
                         break;
                     
                     case "PER":
@@ -112,7 +101,7 @@ namespace EdiTools.Utilities
                         elements[1] = "123 Street Address";
                         if (elements.Length > 2) 
                         { 
-                            elements[2] = "line 1"; 
+                            elements[2] = "Address line 2"; 
                         }
                         isDataChanged = true;
                         break;
