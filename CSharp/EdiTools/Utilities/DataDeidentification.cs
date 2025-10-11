@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -22,63 +23,83 @@ namespace EdiTools.Utilities
                     case "NM1":
                         if (elements[2] == "1") // individual
                         {
-                            var name = string.Empty;
+                            var entityIdName = string.Empty;
                             switch (elements[1])
                             {
                                 case "41": // submitter
-                                    name = "Submitter";
+                                    entityIdName = "Submitter";
                                     break;
 
                                 case "40": // receiver
-                                    name = "Receiver";
+                                    entityIdName = "Receiver";
                                     break;
 
                                 case "IL": // subscriber
-                                    name = "Subscriber";
+                                    entityIdName = "Subscriber";
                                     break;
 
                                 case "QC": // patient
-                                    name = "Patient";
+                                    entityIdName = "Patient";
                                     break;
 
                                 case "DN": // referring provider
-                                    name = "Referring Provider";
+                                    entityIdName = "Referring Provider";
                                     break;
 
                                 case "P3": // Second referring provider
-                                    name = "Second referring provider";
+                                    entityIdName = "Second referring provider";
                                     break;
 
                                 case "85": // billing provider
-                                    name = "Billing Provider";
+                                    entityIdName = "Billing Provider";
                                     break;
 
                                 case "82": // rendering provider
-                                    name = "Rendering Provider";
+                                    entityIdName = "Rendering Provider";
                                     break;
 
                                 case "QB":
-                                    name = "Purchase Service Provider";
+                                    entityIdName = "Purchase Service Provider";
                                     break;
 
                                 case "DQ":
-                                    name = "Supervising Physician";
+                                    entityIdName = "Supervising Physician";
                                     break;
 
                                 case "DK":
-                                    name = "Ordering Physician";
+                                    entityIdName = "Ordering Physician";
+                                    break;
+
+                                 case "71":
+                                    entityIdName = "Attending Physician";
+                                    break;
+
+                                case "72":
+                                    entityIdName = "Operating Physician";
+                                    break;
+
+                                case "73":
+                                    entityIdName = "Other Physician";
+                                    break;
+
+                                case "ZZ":
+                                    entityIdName = "Other Operating Physician";
+                                    break;
+
+                                case "AO":
+                                    entityIdName = "Account Of";
                                     break;
 
                                 default: // all other names
-                                    name = "Default";
+                                    entityIdName = "Default";
                                     break;
                             } // switch
 
                             // update NM1 elements
-                            elements[3] = String.IsNullOrEmpty(elements[3]) ? String.Empty : $"{name} Name";
-                            if (elements.Length > 4) { elements[4] = String.IsNullOrEmpty(elements[4]) ? String.Empty : $"{name} First Name"; }
-                            if (elements.Length > 5) { elements[5] = String.IsNullOrEmpty(elements[5]) ? String.Empty : $"{name} Middle Name"; }
-                            if (elements.Length > 9) { elements[9] = $"{name.ToUpper()}-ID"; }
+                            elements[3] = String.IsNullOrEmpty(elements[3]) ? String.Empty : $"{entityIdName} Name";
+                            if (elements.Length > 4) { elements[4] = String.IsNullOrEmpty(elements[4]) ? String.Empty : $"{entityIdName} First Name"; }
+                            if (elements.Length > 5) { elements[5] = String.IsNullOrEmpty(elements[5]) ? String.Empty : $"{entityIdName} Middle Name"; }
+                            if (elements.Length > 9) { elements[9] = $"{entityIdName.ToUpper()}-ID"; }
 
                             isDataChanged = true;
                         }
@@ -134,16 +155,78 @@ namespace EdiTools.Utilities
                         break;
 
                     case "REF":
+                            switch (elements[1])
+                        {
+                            case "SY": // SSN
+                                elements[2] = "000000000";
+                                break;
+
+                            case "8U": // Bank assigned security identifier
+                                elements[2] = "bank1234";
+                                break;
+
+                            case "EM": // Electronic Payment Reference Number
+                                elements[2] = "eref-pay1234";
+                                break;
+
+                            case "Y4": // Property and Casualty clai number
+                                elements[2] = "agencyclaim1234";
+                                break;
+
+                            case "BB": // Credit/Debit Card Information
+                                elements[2] = "auth1234";
+                                break;
+
+                            case "1W": // Member identificationn
+                                elements[2] = "member1234";
+                                break;
+
+                            case "1G": // Insurance policy number
+                                elements[2] = "policy1234";
+                                break;
+
+                            case "23": // claim number
+                                elements[2] = "claim1234";
+                                break;
+
+                            case "9F": // referral number
+                                elements[2] = "referral1234";
+                                break;
+
+                            case "G1": // prior authorization number
+                                elements[2] = "priorauth1234";
+                                break;
+
+                            case "F8": // payer claim control number
+                                elements[2] = "payerclaimctrl1234";
+                                break;
+
+                            case "9A": // repriced claim number
+                                elements[2] = "repriced1234";
+                                break;
+
+                            case "9C": // adjusted repriced claim number
+                                elements[2] = "adjustedrepriced1234";
+                                break;
+
+                            case "9D": // claim number
+                                elements[2] = "claimnumber1234";
+                                break;
+
+                            case "EA": // medical record number
+                                elements[2] = "medicalrecordnumber1234";
+                                break;
+                        }
                         isDataChanged = true;
                         break;
 
                     case "CLM":
-                        elements[1] = "Patient Control Number";
+                        elements[1] = "Patient Ctl Num 1234";
                         isDataChanged = true;
                         break;
 
                     case "DTP":
-                        elements[1] = "19000101";
+                        elements[1] = "19900101";
                         if (elements.Length > 3) {
                             elements[3] = String.IsNullOrEmpty(elements[3]) ? String.Empty : "19000101"; 
                         }
