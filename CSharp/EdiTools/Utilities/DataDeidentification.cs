@@ -181,7 +181,7 @@ namespace EdiTools.Utilities
                                 elements[2] = "member1234";
                                 break;
 
-                            case "1G": // Insurance policy number
+                            case "IG": // Insurance policy number
                                 elements[2] = "policy1234";
                                 break;
 
@@ -216,6 +216,78 @@ namespace EdiTools.Utilities
                             case "EA": // medical record number
                                 elements[2] = "medicalrecordnumber1234";
                                 break;
+
+                            case "EI": // identification number
+                                elements[2] = "employerid1234";
+                                break;
+
+                            case "4N":
+                                elements[2] = "specialpayment1234";
+                                break;
+
+                            case "72": // other physician
+                                elements[3] = "other physican last";
+                                if (elements.Length > 4) 
+                                { 
+                                    elements[4] = String.IsNullOrEmpty(elements[4]) ? String.Empty : "other physican first"; 
+                                }
+                                if (elements.Length > 5)
+                                {
+                                    elements[5] = String.IsNullOrEmpty(elements[5]) ? String.Empty : "other physican first";
+                                }
+                                if (elements.Length > 6)
+                                {
+                                    elements[6] = String.IsNullOrEmpty(elements[6]) ? String.Empty : "other physican middle";
+                                }
+                                break;
+
+                            case "ZZ": // other physician
+                                elements[3] = "other operating physican";
+                                if (elements.Length > 4)
+                                {
+                                    elements[4] = String.IsNullOrEmpty(elements[4]) ? String.Empty : "other operating first";
+                                }
+                                if (elements.Length > 5)
+                                {
+                                    elements[5] = String.IsNullOrEmpty(elements[5]) ? String.Empty : "other operating first";
+                                }
+                                if (elements.Length > 6)
+                                {
+                                    elements[6] = String.IsNullOrEmpty(elements[6]) ? String.Empty : "other operating middle";
+                                }
+                                break;
+
+                            case "82":
+                                elements[3] = "rendering provider";
+                                if (elements.Length > 4)
+                                {
+                                    elements[4] = String.IsNullOrEmpty(elements[4]) ? String.Empty : "rendering first";
+                                }
+                                if (elements.Length > 5)
+                                {
+                                    elements[5] = String.IsNullOrEmpty(elements[5]) ? String.Empty : "rendering first";
+                                }
+                                if (elements.Length > 6)
+                                {
+                                    elements[6] = String.IsNullOrEmpty(elements[6]) ? String.Empty : "rendering middle";
+                                }
+                                break;
+
+                            case "0B": // State License Number
+                                elements[2] = "state license number";
+                                break;
+
+                            case "1G": // Provider UPIN Number
+                                elements[2] = "X00000";
+                                break;
+
+                            case "G2": // Provider Commercial Number
+                                elements[2] = "commercial number";
+                                break;
+
+                            case "LU": // Location Number
+                                elements[2] = "Location Number";
+                                break;
                         }
                         isDataChanged = true;
                         break;
@@ -226,7 +298,6 @@ namespace EdiTools.Utilities
                         break;
 
                     case "DTP":
-                        elements[1] = "19900101";
                         if (elements.Length > 3) {
                             elements[3] = String.IsNullOrEmpty(elements[3]) ? String.Empty : "19000101"; 
                         }
@@ -240,6 +311,7 @@ namespace EdiTools.Utilities
                         break;
 
                     case "NTE":
+                        elements[2] = "scrubbed text";
                         isDataChanged = true;
                         break;
 
