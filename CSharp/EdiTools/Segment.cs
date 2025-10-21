@@ -27,11 +27,17 @@ namespace EdiTools
                 if (this._elements != null)
                 {
                     var sb = new StringBuilder();
+                    int oneBasedCount = 1; // used to detect not appending the element delimiter to the last element
                     foreach(var element in this._elements)
                     {
                         sb.Append(element);
-                        sb.Append(this.Delimiter.Element);
+                        if (oneBasedCount < this._elements.Length)
+                        {
+                            sb.Append(this.Delimiter.Element);
+                        }
+                        oneBasedCount++;
                     }
+                    
                     sb.Append(this.Delimiter.Segment);
                     sb.Append(this.Delimiter.LineTerminator);
                     return sb.ToString();
@@ -40,7 +46,13 @@ namespace EdiTools
                 return _ediText.Substring(this.Start, this.Length); 
             }
         }
-        // make internal after testing
+        public string OriginalText
+        {
+            get 
+            {
+                return this._ediText.Substring(this.Start, this.Length);
+            }
+        }
         public string[] Elements
         {
             get 

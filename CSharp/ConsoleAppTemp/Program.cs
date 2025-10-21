@@ -15,9 +15,12 @@ internal class Program
 			//var segs = EdiTools.Utilities.FileOperations.GetEdi837SegmentsForPatientControlNumber(f, "1001A");
 
 			foreach(var text in FileOperations.Split837ByClaims(f, "clm12345678"))
-
             {
-				Console.WriteLine(text);
+				var deidentified = DataDeidentification.Deidentify837(text);
+
+
+				// just for display purposes
+				Console.WriteLine(deidentified);
 				Console.WriteLine();
 			}
         }

@@ -1,0 +1,26 @@
+PHIType,Loop,Segment,Element,AppliesTo,Notes
+Submitter/Receiver Names,1000A/1000B,NM1,NM103-NM105,P/I/D,Only de-identify if individuals
+Submitter/Receiver Contact,1000A/1000B,PER,PER04–PER07,P/I/D,Remove phone/fax/email
+Subscriber Name,2010BA,NM1,NM103–NM105,P/I/D,Remove first/middle/last
+Subscriber ID,2010BA,NM1,NM109,P/I/D,Health plan ID (PHI)
+Subscriber Address,2010BA,N3/N4,N301–N403,P/I/D,Remove street/city/ZIP
+Subscriber DOB,2010BA,DMG,DMG02,P/I/D,Remove DOB
+Subscriber Gender,2010BA,DMG,DMG03,P/I/D,Optional
+Patient Name,2010CA,NM1,NM103–NM105,P/I/D,Remove names
+Patient Address,2010CA,N3/N4,N301–N403,P/I/D,Remove street/city/ZIP
+Patient DOB,2010CA,DMG,DMG02,P/I/D,Remove DOB
+Provider Name,2310/2420,NM1,NM103–NM105,P/I/D,Optional for full anonymization
+Provider IDs,2310/2420,NM1/REF,NM109/REF02,P/I/D,Mask if required
+Claim Control #,2300,CLM,CLM01,P/I/D,Often contains account #
+Patient Account #,2300,REF,REF01=HJ,P/I/D,Remove
+Medical Record #,2300/2400/2010BA,REF,REF01=MR,P/I/D,Remove
+Social Security #,2010BA/2010CA,REF,REF01=SY,P/I/D,Remove
+Employee/Employer ID,2300/2010BA,REF,REF01=EA,P/I/D,Remove
+Dates (Claim/Service),2300/2400,DTP,DTP03,P/I/D,Remove or generalize
+Admission/Discharge Dates,2300/2400,DTP,DTP03,I,Remove
+Diagnosis/Procedure Dates,2300,DTP,DTP03,P/I/D,Remove
+Provider Contact Info,2310/2420,PER,PER04–PER07,P/I/D,Remove
+Geographic Info,2010BA/2010CA,N4,N401–N403,P/I/D,Keep state only
+Service Facility,2310E,NM1,NM103–NM105,I/D,Optional
+Billing Provider,2010AA,NM1/REF,NM103–NM105/P02,P/I/D,Optional
+Claim Notes,2300/2400,NTE,NTE02,P/I/D,Scrub free text
