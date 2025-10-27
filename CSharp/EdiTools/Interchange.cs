@@ -21,7 +21,6 @@ namespace EdiTools
         {
             get
             {
-                // interchange is essentially the entire file
                 return this.Segments.ToText();
             }
         }
@@ -50,6 +49,23 @@ namespace EdiTools
             }
 
             return interchange;
+        }
+        public string Unwrap()
+        {
+            if (this.Segments[0].Delimiter.LineTerminator.Length > 0)
+            {
+                return this.Text;
+            }
+            else
+            {
+                var sb = new StringBuilder(16 * this.Segments.Count);
+                foreach (var idx in this.Segments)
+                {
+                    sb.Append(idx.Text);
+                    sb.Append(System.Environment.NewLine);
+                }
+                return sb.ToString();
+            }
         }
     }
 }

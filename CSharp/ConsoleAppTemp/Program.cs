@@ -9,9 +9,17 @@ internal class Program
     {
 		try
 		{
-			var f = new EdiFile(@"C:\Users\LanceEngland\source\repos\EdiTools2\samples\sample837-P.txt");
+			var f = new EdiFile(args[0]);
 
-			var t = f.FunctionalGroups[0].TransactionSets[0];
+			Console.WriteLine("Original");
+			Console.WriteLine(f.Interchange.Text);
+            Console.WriteLine();
+
+            Console.WriteLine("Unwrap");
+            Console.WriteLine(f.Interchange.Unwrap());
+            Console.WriteLine();
+
+            var t = f.FunctionalGroups[0].TransactionSets[0];
 			//var segs = EdiTools.Utilities.FileOperations.GetEdi837SegmentsForPatientControlNumber(f, "1001A");
 
 			foreach(var text in FileOperations.Split837ByClaims(f, "clm12345678"))
