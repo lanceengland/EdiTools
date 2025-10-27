@@ -28,7 +28,7 @@ namespace EdiTools
         public List<Segment> Segments { get; private set; }
         public string Unwrap()
         {
-            if (this.ST.Delimiter.LineTerminator.Length == 0)
+            if (this.ST.Delimiter.LineTerminator.Length > 0)
             {
                 return this.Text;
             }
