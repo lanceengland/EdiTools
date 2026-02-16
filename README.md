@@ -61,5 +61,4 @@ If you don't want to clone the repo, and just want to install the PowerShell mod
 Future development may include:
 
 * Additional EDI document type functions e.g. Get-Edi999, Get-Edi837, etc.
-* Change Add-Type from inline C\# to referenced DLL
 * Create a .net Core and PowerShell Core version?
